@@ -1,5 +1,3 @@
 # README
 
-Platzhalter.
-
-TEST++++
+Schreibtest erfolgreich.
