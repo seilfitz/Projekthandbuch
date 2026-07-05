@@ -1,0 +1,3 @@
+# Architekturentscheidungen ADR
+
+> Platzhalter

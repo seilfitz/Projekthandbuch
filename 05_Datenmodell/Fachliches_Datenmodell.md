@@ -1,0 +1,3 @@
+# Fachliches Datenmodell
+
+> Platzhalter

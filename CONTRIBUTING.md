@@ -1,0 +1,3 @@
+# CONTRIBUTING
+
+Platzhalter.

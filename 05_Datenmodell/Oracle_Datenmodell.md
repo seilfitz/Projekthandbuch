@@ -1,0 +1,3 @@
+# Oracle Datenmodell
+
+> Platzhalter
