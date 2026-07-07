@@ -4,7 +4,7 @@
 |---|---|
 | Kapitel | 05 – Datenmodell |
 | Dokument | Datenmodell Übersicht |
-| Status | Konsolidierter Arbeitsstand, Teil 1 |
+| Status | Konsolidierter Arbeitsstand, Teil 2 |
 | Typ | Fachliches Übersichts- und Referenzdokument |
 | Priorität | Sehr hoch |
 | Leitquellen | `Quellen/2026-07-05_Snapshot1.txt`, Lastenheft, Oracle-DDLs, Kapitel `03_Domaenen`, Architekturkapitel, fachliche Korrekturen Facility ↔ Booking und Charge ↔ Invoice |
@@ -441,13 +441,251 @@ Die zentralen Bestandsbereiche bleiben in Oracle und PL/SQL führend.
 
 Neue Portaldomänen ergänzen den Bestand, ersetzen ihn aber nicht.
 
-Die folgenden Abschnitte dieser Datei ergänzen darauf aufbauend:
+---
 
-- Mapping Domäne → Oracle-Tabellen,
-- Mapping Domäne → PL/SQL-Packages,
-- Mapping Domäne → REST-Verantwortung,
-- fachliche Identitäten und Schlüsselfelder,
+## 10 Domänen → Oracle-Tabellen
+
+Die folgende Matrix beschreibt die fachliche Zuordnung der zentralen Oracle-Tabellen zu den Domänen.
+
+Sie ist keine vollständige Tabelleninventur. Vollständige Details folgen in `Tabellen.md`.
+
+| Domäne | Zentrale Oracle-Tabellen | Fachliche Bedeutung |
+|---|---|---|
+| Booking | `LHD_SPA_EVENTS`, `LHD_SPA_EVENTS_HIST`, `LHD_SPA_EVENTTYPES`, `LHD_SPA_EVENTCLASSES`, `LHD_SPA_EVENT2UNIT`, `LHD_SPA_BOOKING_NUMBERS`, `LHD_SPA_RECURRING_PATTERN` | Event, Buchung, Eventtyp, Eventklasse, Teileinheitszuordnung, Buchungsnummer, Wiederholung |
+| Booking | `LHD_SPA_OCC`, `LHD_SPA_OCC_WINNER`, `LHD_SPA_OCC_DAY_COVERAGE`, `LHD_SPA_OCC_EVENT_DRT`, `LHD_SPA_OCC_WINNER_DRT` | konkrete Vorkommen, gültige Belegung, Aktualisierungs- und technische Dirty-Strukturen |
+| Booking | `LHD_SPA_SPORTCATEGORIES`, `LHD_SPA_SPORTGROUPS`, `LHD_SPA_SPORTSUBGROUPS`, `LHD_SPA_SPORTTYPES` | Sportreferenzdaten am Event / an der Buchung |
+| Facility | `LHD_SPA_SPORTSCOMPLEXES`, `LHD_SPA_FACILITY2COMPLEX`, `LHD_SPA_FACILITYGROUPS` | Sportkomplexe, Zuordnung Sportanlage zu Komplex, Sportanlagengruppen |
+| Facility | `LHD_SPA_EVENTS`, `LHD_SPA_EVENT2UNIT`, `LHD_SPA_OCC`, `LHD_SPA_OCC_WINNER` | Facility-Bezug über `ID_SPA`, `SPA_NR`, `UNIT_ID`; fachliche Hauptverantwortung für Events bleibt Booking |
+| Availability | `LHD_SPA_OCC`, `LHD_SPA_OCC_WINNER`, `LHD_SPA_OCC_DAY_COVERAGE` | Grundlage für freie Zeiten, Kalender und Konfliktprüfung |
+| Charge | `LHD_SPA_CHARGES`, `LHD_SPA_CHARGETYPES`, `LHD_SPA_CHARGEGROUPS`, `LHD_SPA_CHARGE2FACILITYGROUP` | Gebührenstammdaten, Typen, Gruppen und FacilityGroup-Zuordnung |
+| Charge | `LHD_SPA_EVENTCHARGES`, `LHD_SPA_EVENTCHARGES_HIST`, `LHD_SPA_INVOICE_CHARGEINFOS`, `LHD_SPA_INVOICE_CHARGEINFOS_2025` | Buchungsgebühren, Historie und rechnungsrelevante Gebühreninformationen |
+| Invoice | `LHD_SPA_INVOICES`, `LHD_SPA_INVOICES_HIST`, `LHD_SPA_INVOICE_CHARGEINFOS` | Rechnungen, Historie, Anzeige von Rechnungspositionen über ChargeInfos |
+| Document | `LHD_SPA_DOCUMENTS`, `LHD_SPA_DOCUMENTS_EVENTS`, `LHD_SPA_DOCUMENT_NUMBERS`, `LHD_SPA_DOCUMENT_TEMPLATES`, `LHD_SPA_DOCUMENT_TEXTMODULES`, `LHD_SPA_DOCUMENT_TYPES` | Dokumente, Event-Zuordnung, Nummernkreise, Vorlagen, Textbausteine, Dokumenttypen |
+| Upload | neue / zu prüfende Upload-Tabellen laut Domäne Upload | technische Dateiannahme, Validierung, Zuordnung; finale Persistenz abhängig von Speicherstrategie |
+| Application | neue / zu definierende Antragstabellen laut Domäne Application | Onlineanträge, Entwürfe, Payload, Status, Zuordnungen |
+| Wizard | neue / zu definierende Wizard-Konfigurationstabellen laut Domäne Wizard | Schritt-, Feld-, Validierungs- und Pflichtanlagenkonfiguration |
+| Workflow | neue / zu definierende Workflow-Tabellen laut Domäne Workflow | Vorgänge, Aufgaben, Rückfragen, Statusübergänge |
+| Authentication | neue / zu definierende Identity-/Auth-Tabellen laut Domäne Authentication | technische Portalidentität, Login, Token, Sperre |
+| PortalUser | neue / zu definierende PortalUser-Tabellen laut Domäne PortalUser | fachliches Benutzerprofil, Präferenzen, Zustimmungen |
+| Organisation | neue / zu definierende Organisations- und Mitgliedschaftstabellen laut Domäne Organisation | Organisationen, Abteilungen, Mitgliedschaften, Rollenbezug |
+| Context | neue / abgeleitete Kontextstrukturen laut Domäne Context | aktiver Sichtbarkeits- und Arbeitskontext |
+| Notification | neue / zu definierende Notification-Tabellen laut Domäne Notification | Portalnachrichten, Empfänger, MailQueue, Versandstatus |
+| Dashboard | keine eigene fachliche Persistenz V1 | reine Aggregation aus anderen Domänen |
+| Administration | neue / zu prüfende Konfigurations- und Auditstrukturen | administrative Einstellungen, Protokollierung, Verwaltungssichten |
+
+---
+
+## 11 Domänen → PL/SQL-Packages
+
+Die folgende Matrix beschreibt die zentrale Package-Verantwortung aus fachlicher Sicht.
+
+| Domäne | Package / Funktion | Bedeutung |
+|---|---|---|
+| Booking | `PA_LHD_SPA` | bestehende Buchungs-, Wiederholungs-, Stornierungs- und weitere SportFM-Bestandslogik |
+| Booking | `PA_LHD_SPA_OCC` | Occurrence- und Winner-Ermittlung, performante Termin- und Belegungszugriffe |
+| Availability | `PA_LHD_SPA_OCC` | führende Grundlage für Belegung und freie Zeiten |
+| Charge | `PA_LHD_SPA.p_get_charges` | führende Gebührenberechnung |
+| Charge | `PA_LHD_SPA` | bestehende Gebühren- und Buchungslogik im Bestand |
+| Invoice | bestehende Rechnungs-/SAP-Packages, noch final zu identifizieren | Anzeige und Status bleiben Bestand; keine SAP-Neuimplementierung |
+| Document | bestehende Dokumentenpackages, noch final zu identifizieren | Dokumentliste, Details, Download und Nummernkreis über Bestand oder Kapselung |
+| Facility | bestehende Facility-/Stammdatenpackages, noch final zu identifizieren | Sportstätten, Teileinheiten, Sportkomplexe, FacilityGroups |
+| Application | neue REST-/Service-Schicht, kein bestätigtes Bestandspackage | Antrag ist neue Portaldomäne |
+| Wizard | neue REST-/Service-Schicht, kein bestätigtes Bestandspackage | Wizard-Konfiguration ist neue Portaldomäne |
+| Workflow | neue REST-/Service-Schicht, kein bestätigtes Bestandspackage | Workflow ist neue / erweiterte Portaldomäne |
+| Upload | neue REST-/Service-Schicht, kein bestätigtes Bestandspackage | Upload ist neue Plattformdomäne |
+| Authentication | neue Auth-Schicht | technische Identität und Zugriff |
+| PortalUser | neue REST-/Service-Schicht | fachliches Benutzerprofil |
+| Organisation | neue REST-/Service-Schicht | Organisationen und Mitgliedschaften |
+| Context | neue REST-/Service-Schicht | Sichtbarkeits- und Arbeitskontext |
+| Notification | neue REST-/Service-Schicht | Portalnachrichten und MailQueue |
+| Dashboard | kein eigenes Package V1 | Aggregation vorhandener Services |
+| Administration | neue / zu prüfende Admin-Kapselungen | Verwaltung und Konfiguration |
+
+### 11.1 Zielprinzip für Package-Nutzung
+
+Die .NET-Schicht ruft Packages über Repository- oder Gateway-Klassen auf.
+
+Die Domänenlogik entscheidet fachlich, **welche** Operation benötigt wird.
+
+Das Repository / Gateway kapselt, **wie** Oracle oder PL/SQL aufgerufen wird.
+
+```text
+REST Controller
+  ↓
+Application / Domain Service
+  ↓
+Repository / Oracle Gateway
+  ↓
+PL/SQL Package / Oracle Tabelle
+```
+
+---
+
+## 12 Domänen → REST-Verantwortung
+
+Die REST-Schicht bildet fachliche Operationen ab und trennt konsequent zwischen Bestandsfreilegung und neuen Portalfunktionen.
+
+| Domäne | REST-Verantwortung | Charakter |
+|---|---|---|
+| Authentication | Login, Registrierung, Token, Passwortprozesse | neu |
+| PortalUser | Profil, Einstellungen, Favoriten, Zustimmungen | neu |
+| Organisation | Organisationen, Mitgliedschaften, Rollenbezug | neu / erweitert |
+| Context | verfügbare Kontexte, aktiver Kontext | neu |
+| Application | Anträge, Entwürfe, Einreichung, Status | neu |
+| Wizard | Wizarddefinitionen, Schritte, Felder, Validierungen | neu |
+| Workflow | Aufgaben, Rückfragen, Entscheidungen, Status | neu / erweitert |
+| Upload | Datei hochladen, prüfen, zuordnen | neu |
+| Facility | Sportanlagen, Teileinheiten, Sportkomplexe, FacilityGroups | lesende Bestandsfreilegung |
+| Availability | freie Zeiten, Kalender, Konflikte | lesende / prüfende Bestandsfreilegung |
+| Booking | Buchungen, Occurrences, Kalender, Sportreferenzen | lesende Bestandsfreilegung V1 |
+| Charge | Gebührenstammdaten, EventCharges, InvoiceChargeInfos, Gebührenhinweis | lesende Bestandsfreilegung / Vorschau |
+| Invoice | Rechnungsliste, Details, Zahlstatus, PDF-Bezug | lesende Bestandsfreilegung |
+| Document | Dokumentliste, Detail, Download, Dokumenttypen | lesende Bestandsfreilegung / Upload-Übernahme |
+| Notification | Nachrichten, ungelesene Anzahl, MailQueue, Präferenzen | neu |
+| Dashboard | aggregierte Startseite | neu, keine eigene Persistenz |
+| Administration | administrative Sichten, Konfiguration, Audit | neu / erweitert |
+
+---
+
+## 13 Fachliche Identitäten und Schlüsselfelder
+
+Diese Übersicht nennt nur fachlich relevante Identitäten. Die vollständige technische Schlüsselbeschreibung folgt in `Tabellen.md`.
+
+| Bereich | Fachliche Identität | Quelle / Bezug |
+|---|---|---|
+| Booking | `ID_EVENT` | zentrale Event-/Buchungsidentität in `LHD_SPA_EVENTS` |
+| Booking | `BOOKING_NUMBER` | fachliche Buchungsnummer |
+| Booking | `ID_BOOKING`, `BOOKING_COUNTER`, `YEAR` | Buchungsnummern- und Jahresbezug |
+| Booking | `EVENT_ID` | Occurrence-Bezug in `LHD_SPA_OCC` |
+| Booking | `WINNER_ID` / `OCC_ID` | Winner-/Occurrence-Bezug |
+| Facility | `ID_SPA`, `SPA_NR` | Sportanlagenbezug aus Event / Occurrence |
+| Facility | `ID_UNIT`, `UNIT_ID` | Teileinheitsbezug aus Event2Unit / Occurrence |
+| Facility | `ID_FACILITYGROUP` | Sportanlagengruppe / Gebührenbezug |
+| Charge | `ID_CHARGE` | Gebührenstammsatz |
+| Charge | `ID_CHARGETYPE` | Gebührentyp |
+| Charge | `ID_CHARGEGROUP` | Gebührengruppe |
+| Charge | `ID_EVENT` + `ID_CHARGE` | EventCharge-Bezug |
+| Invoice | `ID_INVOICE` | Rechnung und Rechnungsbezug |
+| Document | `ID_DOCUMENT_TYPE`, `DOCUMENT_NUMBER` | Dokumenttyp und Dokumentnummer |
+| Document | `ID_INVOICE` | Dokumentbezug zur Rechnung |
+| Application | `applicationId` | neue Portalidentität, final im Datenmodell zu definieren |
+| Workflow | `workflowInstanceId`, `taskId` | neue Portalidentitäten, final im Datenmodell zu definieren |
+| Upload | `uploadId` | neue Portalidentität, final im Datenmodell zu definieren |
+| PortalUser | `portalUserId`, `identityId` | neue Portalidentität und technische Identitätsverknüpfung |
+| Context | `contextId` | neue / abgeleitete Kontextidentität |
+
+---
+
+## 14 Fachliche Referenzdaten
+
+Referenzdaten werden fachlich einer verantwortlichen Domäne zugeordnet.
+
+| Referenzdaten | Verantwortliche Domäne | Oracle-Bezug |
+|---|---|---|
+| Eventtypen | Booking | `LHD_SPA_EVENTTYPES` |
+| Eventklassen | Booking | `LHD_SPA_EVENTCLASSES` |
+| Sportarten | Booking | `LHD_SPA_SPORTTYPES` |
+| Sportgruppen | Booking | `LHD_SPA_SPORTGROUPS` |
+| Sportuntergruppen | Booking | `LHD_SPA_SPORTSUBGROUPS` |
+| Sportkategorien | Booking | `LHD_SPA_SPORTCATEGORIES` |
+| FacilityGroups | Facility / Charge-Bezug | `LHD_SPA_FACILITYGROUPS` |
+| ChargeTypes | Charge | `LHD_SPA_CHARGETYPES` |
+| ChargeGroups | Charge | `LHD_SPA_CHARGEGROUPS` |
+| DocumentTypes | Document | `LHD_SPA_DOCUMENT_TYPES` |
+| WizardSteps / Fields | Wizard | neue / zu definierende Portalreferenzdaten |
+| NotificationCategories | Notification | neue / zu definierende Portalreferenzdaten |
+| Rollen / Rechte | Authentication / Organisation / Context / Administration | neue / zu definierende Portalreferenzdaten |
+
+---
+
+## 15 Auswirkungen auf nachfolgende Kapitel
+
+### 15.1 Auswirkungen auf `Oracle_Datenmodell.md`
+
+`Oracle_Datenmodell.md` muss die hier genannten fachlichen Datenbereiche technisch vertiefen.
+
+Dort sind insbesondere zu dokumentieren:
+
+- Tabellenbereiche,
+- technische Hilfstabellen,
+- Historien,
+- Dirty-Tabellen,
+- Trigger, falls fachlich relevant,
+- Sequenzen und Nummernkreise,
+- Views, falls vorhanden,
+- technische Abhängigkeiten.
+
+### 15.2 Auswirkungen auf `Tabellen.md`
+
+`Tabellen.md` muss jede relevante Tabelle mit mindestens folgenden Angaben dokumentieren:
+
+- verantwortliche Domäne,
+- fachlicher Zweck,
+- wichtigste Schlüssel,
+- wichtigste Attribute,
+- Beziehung zu anderen Tabellen,
+- verwendende REST-Funktionen,
+- verwendende Packages,
+- Migrationsrelevanz.
+
+### 15.3 Auswirkungen auf `Packages.md`
+
+`Packages.md` muss mindestens folgende Bestandslogik vertiefen:
+
+- `PA_LHD_SPA`,
+- `PA_LHD_SPA_OCC`,
+- `PA_LHD_SPA.p_get_charges`,
+- identifizierte Dokumentenpackages,
+- identifizierte Rechnungs-/SAP-Packages,
+- identifizierte Facility-/Stammdatenpackages.
+
+### 15.4 Auswirkungen auf `04_REST_API`
+
+Die REST-API muss die fachlichen Domänen abbilden und darf keine Tabellen-API werden.
+
+Die REST-Struktur muss deshalb den Domänen folgen:
+
+```text
+/api/v1/bookings
+/api/v1/facilities
+/api/v1/charges
+/api/v1/invoices
+/api/v1/documents
+/api/v1/applications
+/api/v1/workflow
+```
+
+### 15.5 Auswirkungen auf `06_Arbeitspakete` und `07_Kalkulation`
+
+Die Arbeitspakete und die Kalkulation müssen zwischen folgenden Aufwandsarten unterscheiden:
+
+| Art | Bedeutung |
+|---|---|
+| Bestandsfreilegung | Oracle-/PLSQL-Bestand fachlich über REST verfügbar machen |
+| Neuentwicklung | neue Portal- und Plattformfunktionen entwickeln |
+| Integration | Domänen verbinden, z. B. Booking ↔ Charge ↔ Invoice |
+| Migration | WPF und Bestand schrittweise an REST und Portal anbinden |
+| Tests | Regression gegen Bestand und neue Portalfunktionen |
+
+---
+
+## 16 Ergebnis dieses Bearbeitungsstands
+
+Mit diesem Abschnitt sind die zentralen Mapping-Sichten ergänzt:
+
+- Domäne → Oracle-Tabellen,
+- Domäne → PL/SQL-Packages,
+- Domäne → REST-Verantwortung,
+- fachliche Identitäten,
+- Referenzdaten,
+- Auswirkungen auf die Folgedokumente.
+
+Die noch zu ergänzenden Abschnitte dieser Datei sind:
+
 - Datenflüsse,
+- Lebenszyklen,
+- Traceability-Matrix,
 - Risiken,
 - offene Punkte,
-- Traceability.
+- Änderungsauswirkungen,
+- Abschlussbewertung.
