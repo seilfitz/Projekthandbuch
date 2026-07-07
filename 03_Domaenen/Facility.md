@@ -4,10 +4,10 @@
 |---|---|
 | Kapitel | 03 – Domänen |
 | Dokument | Facility |
-| Status | Konsolidierter Arbeitsstand |
+| Status | Konsolidierter Arbeitsstand, korrigiert |
 | Typ | Bestandsdomäne / REST-Freilegung |
 | Priorität | Sehr hoch |
-| Leitquellen | `Quellen/2026-07-05_Snapshot1.txt`, DDL-Dateien `LHD_SPA_SPORTSCOMPLEXES.sql`, `LHD_SPA_FACILITY2COMPLEX.sql`, `LHD_SPA_FACILITYGROUPS.sql`, `LHD_SPA_EVENT2UNIT.sql`, Sportarten-DDLs |
+| Leitquellen | `Quellen/2026-07-05_Snapshot1.txt`, DDL-Dateien `LHD_SPA_SPORTSCOMPLEXES.sql`, `LHD_SPA_FACILITY2COMPLEX.sql`, `LHD_SPA_FACILITYGROUPS.sql`, `LHD_SPA_EVENT2UNIT.sql`, `LHD_SPA_EVENTS.sql` |
 
 ---
 
@@ -15,7 +15,7 @@
 
 Die Domäne **Facility** beschreibt die vorhandene Sportstättenstruktur von SportFM.
 
-Sie stellt Sportkomplexe, Sportanlagen, Teileinheiten, Sportanlagengruppen, Such- und Filterinformationen sowie Stammdatenbezüge für Portal, Application, Wizard, Availability und Booking bereit.
+Sie stellt Sportkomplexe, Sportanlagen, Teileinheiten, Sportanlagengruppen sowie Such- und Filterinformationen zu Sportstätten für Portal, Application, Wizard, Availability und Booking bereit.
 
 Facility ist keine Neuentwicklung der Sportstättenlogik.
 
@@ -23,7 +23,32 @@ Ziel ist die fachliche Dokumentation des Bestands und die kontrollierte REST-Fre
 
 ---
 
-## 2 Projektbewertung
+## 2 Korrektur gegenüber Vorversion
+
+Die Tabellen
+
+- `LHD_SPA_SPORTCATEGORIES`,
+- `LHD_SPA_SPORTGROUPS`,
+- `LHD_SPA_SPORTSUBGROUPS`,
+- `LHD_SPA_SPORTTYPES`
+
+gehören fachlich **nicht** zur Domäne Facility.
+
+Sie beschreiben Sportarten, Sportgruppen und Sportkategorien einer **Buchung / eines Events**.
+
+Der Bezug erfolgt in `LHD_SPA_EVENTS` über:
+
+- `ID_SPORTTYPE`,
+- `ID_SPORTGROUP`,
+- `ID_SPORTSUBGROUP`.
+
+Damit sind diese Tabellen und Attribute der Domäne **Booking** bzw. der fachlichen Event-/Buchungsbeschreibung zuzuordnen, nicht der Sportanlage selbst.
+
+Facility beschreibt die bauliche / organisatorische Sportstättenstruktur. Die Sportart beschreibt die konkrete Nutzung im Rahmen einer Buchung oder eines Antrags.
+
+---
+
+## 3 Projektbewertung
 
 | Bereich | Bestand | Erweiterung | Neuentwicklung | Bewertung |
 |---|:---:|:---:|:---:|---|
@@ -33,12 +58,12 @@ Ziel ist die fachliche Dokumentation des Bestands und die kontrollierte REST-Fre
 | DTO |  |  | x | fachliche DTOs, keine Tabellen-DTOs |
 | Portal |  | x | x | Suche, Filter, Anzeige, Wizard-Auswahl |
 | Availability | x | x |  | nutzt Anlagen und Teileinheiten für Verfügbarkeiten |
-| Booking | x | x |  | bucht auf Teileinheiten |
+| Booking | x | x |  | bucht auf Teileinheiten und referenziert Sportarten am Event |
 | Tests |  | x | x | Stammdaten-, Filter-, Kontext- und Integrationstests |
 
 ---
 
-## 3 Grundsatz
+## 4 Grundsatz
 
 Facility wird nicht neu modelliert.
 
@@ -51,14 +76,15 @@ Verbindliche Grundsätze:
 - keine Buchungslogik in Facility,
 - keine Verfügbarkeitsberechnung in Facility,
 - keine Gebührenberechnung in Facility,
+- keine Sportartenlogik in Facility,
 - REST kapselt fachliche Stammdatenabfragen,
 - Portal nutzt Facility nur lesend und kontextbezogen.
 
 ---
 
-## 4 Fachlicher Bestand
+## 5 Fachlicher Bestand
 
-Aus Snapshot und DDL-Struktur ergeben sich folgende fachliche Bestandselemente:
+Aus Snapshot und DDL-Struktur ergeben sich für Facility folgende fachliche Bestandselemente:
 
 - ca. 500 Sportstätten / Sportanlagen,
 - ca. 1000 Teileinheiten,
@@ -68,13 +94,21 @@ Aus Snapshot und DDL-Struktur ergeben sich folgende fachliche Bestandselemente:
 - Sportanlagengruppen,
 - Zuordnung Sportanlage zu Sportkomplex,
 - Zuordnung Buchung / Event zu Teileinheiten,
-- Bezug zu Sportarten, Sportgruppen und Sportkategorien,
-- Filter nach Sportanlagentyp, Stadtteil und weiteren Merkmalen,
-- Nutzung in freier-Zeiten-Suche.
+- Filter nach Sportanlagentyp, Stadtteil und weiteren Sportstättenmerkmalen,
+- Nutzung als Stammdatenbasis in freier-Zeiten-Suche.
+
+Nicht Bestandteil von Facility:
+
+- Sportarten,
+- Sportgruppen,
+- Sportuntergruppen,
+- Sportkategorien.
+
+Diese Merkmale beschreiben die Nutzung / Buchung und werden über `LHD_SPA_EVENTS` referenziert.
 
 ---
 
-## 5 Fachliches Strukturmodell
+## 6 Fachliches Strukturmodell
 
 ```text
 Sportkomplex
@@ -90,11 +124,13 @@ Sportanlagen dienen der fachlichen Darstellung, Suche, Filterung und Gruppierung
 
 Sportkomplexe fassen Sportanlagen organisatorisch zusammen.
 
+Sportarten werden nicht als Eigenschaften der Sportanlage modelliert, sondern als Eigenschaften des Events / der Buchung.
+
 ---
 
-## 6 Abgrenzung
+## 7 Abgrenzung
 
-### 6.1 Verantwortlich
+### 7.1 Verantwortlich
 
 Facility ist verantwortlich für:
 
@@ -103,16 +139,20 @@ Facility ist verantwortlich für:
 - Teileinheiten,
 - Sportanlagengruppen,
 - Stammdatenanzeige,
-- Such- und Filterwerte,
+- Such- und Filterwerte zu Sportstätten,
 - Zuordnung Sportanlage zu Sportkomplex,
 - Zuordnung Teileinheit zu Sportanlage, soweit im Bestand vorhanden,
 - fachliche Anzeige für Portal und Wizard,
 - Stammdatenbasis für Availability und Booking.
 
-### 6.2 Nicht verantwortlich
+### 7.2 Nicht verantwortlich
 
 Facility ist nicht verantwortlich für:
 
+- Sportarten,
+- Sportgruppen,
+- Sportuntergruppen,
+- Sportkategorien,
 - Belegungsberechnung,
 - freie Zeiten,
 - Buchungserstellung,
@@ -125,11 +165,11 @@ Facility ist nicht verantwortlich für:
 - Kontextableitung,
 - Authentifizierung.
 
-Diese Verantwortlichkeiten liegen in Availability, Booking, Charge, Invoice, Document, Application, Workflow, Context und Authentication.
+Diese Verantwortlichkeiten liegen insbesondere in Booking, Availability, Charge, Invoice, Document, Application, Workflow, Context und Authentication.
 
 ---
 
-## 7 Einordnung in die Plattform
+## 8 Einordnung in die Plattform
 
 ```text
 Facility
@@ -141,17 +181,19 @@ Application / Wizard
 Booking
 ```
 
-Facility liefert Stammdaten.
+Facility liefert Sportstättenstammdaten.
 
 Availability ermittelt daraus in Verbindung mit Booking freie Zeiten.
 
 Application und Wizard nutzen Facility zur Auswahl der gewünschten Sportanlage oder Teileinheit.
 
-Booking verwendet die Teileinheit als buchbare Einheit.
+Booking verwendet die Teileinheit als buchbare Einheit und referenziert Sportart, Sportgruppe und Sportuntergruppe am Event.
 
 ---
 
-## 8 Relevante Oracle-Tabellen
+## 9 Relevante Oracle-Tabellen
+
+### 9.1 Facility-relevante Tabellen
 
 | Tabelle | Zweck |
 |---|---|
@@ -162,18 +204,25 @@ Booking verwendet die Teileinheit als buchbare Einheit.
 | `LHD_SPA_EVENTS` | enthält Sportanlagenbezug über `ID_SPA` und `SPA_NR` |
 | `LHD_SPA_OCC` | konkrete Belegungsvorkommen mit `SPA_ID` und `UNIT_ID` |
 | `LHD_SPA_OCC_WINNER` | resultierende Belegung mit `SPA_ID` und `UNIT_ID` |
-| `LHD_SPA_SPORTCATEGORIES` | Sportkategorien |
-| `LHD_SPA_SPORTGROUPS` | Sportgruppen |
-| `LHD_SPA_SPORTSUBGROUPS` | Sportuntergruppen |
-| `LHD_SPA_SPORTTYPES` | Sportarten |
 
 Die eigentlichen Tabellen für Sportanlagen und Teileinheiten sind im Datenmodellkapitel final zu identifizieren, sofern sie nicht in den aktuell vorliegenden DDL-Auszügen enthalten sind.
 
+### 9.2 Nicht Facility, sondern Booking / Event
+
+| Tabelle | Zuordnung | Begründung |
+|---|---|---|
+| `LHD_SPA_SPORTCATEGORIES` | Booking / Event | Sportkategorie beschreibt die Nutzungsart im Event-Kontext |
+| `LHD_SPA_SPORTGROUPS` | Booking / Event | `LHD_SPA_EVENTS` referenziert Sportgruppe |
+| `LHD_SPA_SPORTSUBGROUPS` | Booking / Event | `LHD_SPA_EVENTS` referenziert Sportuntergruppe |
+| `LHD_SPA_SPORTTYPES` | Booking / Event | `LHD_SPA_EVENTS` referenziert Sportart |
+
+Diese Tabellen dürfen nicht als Attribute oder Klassen der Sportanlage beschrieben werden.
+
 ---
 
-## 9 Wichtige Spalten aus dem Bestand
+## 10 Wichtige Spalten aus dem Bestand
 
-### 9.1 `LHD_SPA_EVENT2UNIT`
+### 10.1 `LHD_SPA_EVENT2UNIT`
 
 | Spalte | Bedeutung |
 |---|---|
@@ -182,18 +231,21 @@ Die eigentlichen Tabellen für Sportanlagen und Teileinheiten sind im Datenmodel
 
 Die Tabelle zeigt, dass Events mehreren Teileinheiten zugeordnet werden können.
 
-### 9.2 `LHD_SPA_EVENTS`
+### 10.2 `LHD_SPA_EVENTS`
 
 Für Facility relevante Spalten:
 
 - `ID_SPA`,
 - `SPA_NR`,
-- `IS_ALL_UNIT`,
+- `IS_ALL_UNIT`.
+
+Für Booking / Event relevante Spalten, nicht Facility:
+
 - `ID_SPORTTYPE`,
 - `ID_SPORTGROUP`,
 - `ID_SPORTSUBGROUP`.
 
-### 9.3 `LHD_SPA_OCC`
+### 10.3 `LHD_SPA_OCC`
 
 Für Facility relevante Spalten:
 
@@ -204,7 +256,7 @@ Für Facility relevante Spalten:
 - `EVENT_ID`,
 - `EVENTTYPE_ID`.
 
-### 9.4 `LHD_SPA_OCC_WINNER`
+### 10.4 `LHD_SPA_OCC_WINNER`
 
 Für Facility relevante Spalten:
 
@@ -216,7 +268,7 @@ Für Facility relevante Spalten:
 - `EVENT_ID`,
 - `OCC_ID`.
 
-### 9.5 `LHD_SPA_FACILITYGROUPS`
+### 10.5 `LHD_SPA_FACILITYGROUPS`
 
 Erkennbare Spalten:
 
@@ -226,7 +278,7 @@ Erkennbare Spalten:
 
 ---
 
-## 10 Business Objects
+## 11 Business Objects
 
 | Objekt | Zweck | Persistenz |
 |---|---|---|
@@ -235,11 +287,16 @@ Erkennbare Spalten:
 | `FacilityUnit` | Teileinheit, kleinste buchbare Einheit | Bestand |
 | `FacilityGroup` | Sportanlagengruppe | Bestand |
 | `FacilityFilter` | Filterwerte für Portal und Suche | abgeleitet |
-| `SportType` | Sportart | Bestand |
-| `SportGroup` | Sportgruppe | Bestand |
-| `SportCategory` | Sportkategorie | Bestand |
 
-### 10.1 Klassendiagramm
+Nicht mehr enthalten:
+
+- `SportType`,
+- `SportGroup`,
+- `SportCategory`.
+
+Diese Objekte sind in `Booking.md` bzw. im späteren Datenmodell als Event-/Buchungsreferenzen zu führen.
+
+### 11.1 Klassendiagramm
 
 ```mermaid
 classDiagram
@@ -272,23 +329,16 @@ classDiagram
       +datetime ValidUntil
     }
 
-    class SportType {
-      +string Id
-      +string Name
-      +string GroupId
-    }
-
     SportsComplex --> Facility
     Facility --> FacilityUnit
     Facility --> FacilityGroup
-    Facility --> SportType
 ```
 
-Hinweis: Das Diagramm beschreibt das fachliche Zielmodell der REST-Freilegung. Die finale Spalten- und Tabellenzuordnung bleibt im Datenmodellkapitel zu bestätigen.
+Hinweis: Das Diagramm beschreibt das fachliche Zielmodell der REST-Freilegung. Sportarten, Sportgruppen und Sportkategorien gehören nicht in dieses Klassendiagramm.
 
 ---
 
-## 11 Fachliche Regeln
+## 12 Fachliche Regeln
 
 | ID | Regel |
 |---|---|
@@ -302,18 +352,19 @@ Hinweis: Das Diagramm beschreibt das fachliche Zielmodell der REST-Freilegung. D
 | FAC-BR-008 | Facility-Daten werden für Portal und Wizard nur über REST bereitgestellt. |
 | FAC-BR-009 | Detailinformationen werden nur angezeigt, wenn sie für Portal und Kontext zulässig sind. |
 | FAC-BR-010 | Availability und Booking nutzen dieselben Facility-Identitäten. |
-| FAC-BR-011 | Filterwerte müssen aus dem Bestand abgeleitet werden. |
+| FAC-BR-011 | Filterwerte müssen aus dem Facility-Bestand abgeleitet werden. |
+| FAC-BR-012 | Sportarten, Sportgruppen, Sportuntergruppen und Sportkategorien sind Booking-/Event-Referenzdaten und keine Facility-Attribute. |
 
 ---
 
-## 12 Standardabläufe
+## 13 Standardabläufe
 
-### 12.1 Sportanlagen suchen
+### 13.1 Sportanlagen suchen
 
 ```text
 Portalnutzer öffnet Sportstättensuche
   ↓
-Filter werden geladen
+Facility-Filter werden geladen
   ↓
 Suchparameter erfassen
   ↓
@@ -322,7 +373,7 @@ FacilityService liest passende Sportanlagen
 Ergebnisliste anzeigen
 ```
 
-### 12.2 Sportanlage im Wizard auswählen
+### 13.2 Sportanlage im Wizard auswählen
 
 ```text
 Benutzer bearbeitet Antrag
@@ -331,12 +382,14 @@ Wizard lädt Facility-Auswahl
   ↓
 Sportanlage / Teileinheit auswählen
   ↓
-Application speichert Auswahl im Antragspayload
+Application speichert Facility-Auswahl im Antragspayload
+  ↓
+Sportart / Sportgruppe wird getrennt als Buchungs-/Antragsmerkmal geführt
   ↓
 Availability prüft später freie Zeiten
 ```
 
-### 12.3 Facility-Daten für Availability
+### 13.3 Facility-Daten für Availability
 
 ```text
 Availability erhält Suchparameter
@@ -350,9 +403,9 @@ freie Zeiten werden ermittelt
 
 ---
 
-## 13 Sequenzdiagramme
+## 14 Sequenzdiagramme
 
-### 13.1 Sportanlagen suchen
+### 14.1 Sportanlagen suchen
 
 ```mermaid
 sequenceDiagram
@@ -371,7 +424,7 @@ sequenceDiagram
     API-->>UI: Ergebnisliste
 ```
 
-### 13.2 Teileinheiten laden
+### 14.2 Teileinheiten laden
 
 ```mermaid
 sequenceDiagram
@@ -385,7 +438,7 @@ sequenceDiagram
     API-->>UI: Teileinheiten
 ```
 
-### 13.3 Availability prüft Facility
+### 14.3 Availability prüft Facility
 
 ```mermaid
 sequenceDiagram
@@ -401,7 +454,7 @@ sequenceDiagram
 
 ---
 
-## 14 REST-API
+## 15 REST-API
 
 | ID | Methode | Pfad | Zweck |
 |---|---|---|---|
@@ -412,17 +465,17 @@ sequenceDiagram
 | FAC-API-005 | `GET` | `/api/v1/sports-complexes` | Sportkomplexe lesen |
 | FAC-API-006 | `GET` | `/api/v1/sports-complexes/{id}/facilities` | Anlagen eines Sportkomplexes lesen |
 | FAC-API-007 | `GET` | `/api/v1/facility-groups` | Sportanlagengruppen lesen |
-| FAC-API-008 | `GET` | `/api/v1/facilities/filters` | Filterwerte für Suche lesen |
-| FAC-API-009 | `GET` | `/api/v1/sport-types` | Sportarten lesen |
-| FAC-API-010 | `GET` | `/api/v1/sport-groups` | Sportgruppen lesen |
+| FAC-API-008 | `GET` | `/api/v1/facilities/filters` | Facility-Filterwerte für Suche lesen |
 
 Ändernde Stammdaten-Endpunkte sind in V1 nicht vorgesehen.
 
+Sportarten-, Sportgruppen- und Sportkategorie-Endpunkte gehören nicht zur Facility-API. Sie sind der Booking-/Event-Referenzdaten-API zuzuordnen.
+
 ---
 
-## 15 DTOs
+## 16 DTOs
 
-### 15.1 `FacilityListDto`
+### 16.1 `FacilityListDto`
 
 | Feld | Typ | Pflicht |
 |---|---|:---:|
@@ -435,7 +488,7 @@ sequenceDiagram
 | `unitCount` | int | nein |
 | `availableForPortal` | boolean | nein |
 
-### 15.2 `FacilityDetailDto`
+### 16.2 `FacilityDetailDto`
 
 | Feld | Typ | Pflicht |
 |---|---|:---:|
@@ -447,10 +500,11 @@ sequenceDiagram
 | `district` | string | nein |
 | `sportsComplex` | object | nein |
 | `units` | array | nein |
-| `sportTypes` | array | nein |
 | `facilityGroups` | array | nein |
 
-### 15.3 `FacilityUnitDto`
+Kein Feld `sportTypes`: Sportart ist kein Facility-Attribut.
+
+### 16.3 `FacilityUnitDto`
 
 | Feld | Typ | Pflicht |
 |---|---|:---:|
@@ -460,7 +514,7 @@ sequenceDiagram
 | `bookable` | boolean | nein |
 | `status` | string | nein |
 
-### 15.4 `SportsComplexDto`
+### 16.4 `SportsComplexDto`
 
 | Feld | Typ | Pflicht |
 |---|---|:---:|
@@ -468,19 +522,20 @@ sequenceDiagram
 | `name` | string | ja |
 | `facilityCount` | int | nein |
 
-### 15.5 `FacilityFilterDto`
+### 16.5 `FacilityFilterDto`
 
 | Feld | Typ | Pflicht |
 |---|---|:---:|
 | `districts` | array | nein |
 | `facilityTypes` | array | nein |
-| `sportTypes` | array | nein |
 | `sportsComplexes` | array | nein |
 | `facilityGroups` | array | nein |
 
+Kein Feld `sportTypes`: Sportartfilter ist nur zulässig, wenn er fachlich als Buchungs-/Nutzungsfilter über Booking/Application ausgewertet wird, nicht als Facility-Stammdatum.
+
 ---
 
-## 16 Services
+## 17 Services
 
 | Service | Verantwortung |
 |---|---|
@@ -488,14 +543,15 @@ sequenceDiagram
 | `FacilityUnitService` | Teileinheiten lesen und validieren |
 | `SportsComplexService` | Sportkomplexe lesen |
 | `FacilityGroupService` | Sportanlagengruppen lesen |
-| `FacilityFilterService` | Filterwerte bereitstellen |
-| `SportTypeService` | Sportarten / Gruppen lesen |
+| `FacilityFilterService` | Facility-Filterwerte bereitstellen |
 | `FacilityVisibilityService` | Portal- und Kontextsichtbarkeit prüfen |
 | `FacilityIntegrationService` | Nutzung durch Availability, Booking, Application koordinieren |
 
+Kein `SportTypeService` in Facility.
+
 ---
 
-## 17 Repository
+## 18 Repository
 
 | Repository | Zweck |
 |---|---|
@@ -503,21 +559,22 @@ sequenceDiagram
 | `FacilityUnitRepository` | Teileinheiten lesen |
 | `SportsComplexRepository` | Sportkomplexe lesen |
 | `FacilityGroupRepository` | Sportanlagengruppen lesen |
-| `SportTypeRepository` | Sportarten, Gruppen, Kategorien lesen |
 
 Repositories enthalten keine Geschäftslogik.
 
+Sportarten, Sportgruppen, Sportuntergruppen und Sportkategorien werden nicht über Facility-Repositories bereitgestellt.
+
 ---
 
-## 18 Oracle und PL/SQL
+## 19 Oracle und PL/SQL
 
-### 18.1 Grundsatz
+### 19.1 Grundsatz
 
 Oracle bleibt führend.
 
 REST und Services kapseln den Bestand.
 
-### 18.2 Package-Zuordnung
+### 19.2 Package-Zuordnung
 
 Die vorhandenen Facility- und Stammdatenpackages sind zu identifizieren.
 
@@ -525,14 +582,16 @@ Falls keine eindeutig getrennte Facility-API vorhanden ist, ist eine REST-taugli
 
 | Package | Zweck | Status |
 |---|---|---|
-| bestehende Stammdatenpackages | Sportstätten, Teileinheiten, Sportarten | zu identifizieren |
-| `PA_LHD_SPA_FACILITY` | REST-taugliche Kapselung für Sportanlagen, Teileinheiten und Filter | vorgeschlagene Zielstruktur, noch zu bestätigen |
+| bestehende Facility-/Stammdatenpackages | Sportstätten, Sportkomplexe, Teileinheiten | zu identifizieren |
+| `PA_LHD_SPA_FACILITY` | REST-taugliche Kapselung für Sportanlagen, Teileinheiten und Facility-Filter | vorgeschlagene Zielstruktur, noch zu bestätigen |
+
+Sportartenbezogene Packages sind Booking-/Event-Referenzdaten zuzuordnen.
 
 ---
 
-## 19 Blazor-Frontend
+## 20 Blazor-Frontend
 
-### 19.1 Seiten / Bereiche
+### 20.1 Seiten / Bereiche
 
 | ID | Seite / Bereich | Route | Zweck |
 |---|---|---|---|
@@ -542,23 +601,24 @@ Falls keine eindeutig getrennte Facility-API vorhanden ist, ist eine REST-taugli
 | FAC-PAGE-004 | Facility-Auswahl im Wizard | Bestandteil Antrag | Sportanlage / Teileinheit auswählen |
 | FAC-PAGE-005 | Facility-Filter in Availability | Bestandteil freie Zeiten | Suchfilter |
 
-### 19.2 Komponenten
+### 20.2 Komponenten
 
 | Komponente | Zweck |
 |---|---|
 | `FacilitySearchForm` | Suchparameter erfassen |
-| `FacilityFilterPanel` | Stadtteil, Typ, Sportart, Gruppe filtern |
+| `FacilityFilterPanel` | Stadtteil, Typ, Sportkomplex, Sportanlagengruppe filtern |
 | `FacilityList` | Trefferliste anzeigen |
 | `FacilityCard` | Sportanlage kurz anzeigen |
 | `FacilityDetail` | Detailinformationen anzeigen |
 | `FacilityUnitList` | Teileinheiten anzeigen |
 | `FacilitySelector` | Auswahl im Wizard |
 | `SportsComplexSelector` | Sportkomplexfilter |
-| `SportTypeSelector` | Sportartfilter |
+
+Kein `SportTypeSelector` in Facility. Ein Sportartselector gehört in den Antrag / die Buchung, nicht in die Facility-Domäne.
 
 ---
 
-## 20 Berechtigungen
+## 21 Berechtigungen
 
 | Berechtigung | Zweck |
 |---|---|
@@ -566,14 +626,15 @@ Falls keine eindeutig getrennte Facility-API vorhanden ist, ist eine REST-taugli
 | `Facility.Search` | Sportanlagen suchen |
 | `Facility.Unit.Read` | Teileinheiten lesen |
 | `Facility.SportsComplex.Read` | Sportkomplexe lesen |
-| `Facility.Filter.Read` | Filterwerte lesen |
-| `SportType.Read` | Sportarten und Sportgruppen lesen |
+| `Facility.Filter.Read` | Facility-Filterwerte lesen |
 
 Die reine öffentliche Anzeige kann fachlich freigegeben werden. Detailtiefe und interne Informationen sind über Context und Rollen zu begrenzen.
 
+Keine Sportarten-Berechtigung in Facility.
+
 ---
 
-## 21 Validierungen
+## 22 Validierungen
 
 | ID | Validierung | Ebene |
 |---|---|---|
@@ -581,45 +642,46 @@ Die reine öffentliche Anzeige kann fachlich freigegeben werden. Detailtiefe und
 | FAC-VAL-002 | Teileinheit existiert | FacilityUnit |
 | FAC-VAL-003 | Teileinheit gehört zur Sportanlage | FacilityUnit |
 | FAC-VAL-004 | Sportkomplex existiert | SportsComplex |
-| FAC-VAL-005 | Filterwerte sind gültig | FacilityFilter |
+| FAC-VAL-005 | Facility-Filterwerte sind gültig | FacilityFilter |
 | FAC-VAL-006 | Benutzer darf Detailtiefe sehen | Context / FacilityVisibility |
 | FAC-VAL-007 | Facility ist für Portal sichtbar, falls Portalabfrage | FacilityVisibility |
 | FAC-VAL-008 | Zeitraumbezogene Prüfung erfolgt nicht in Facility, sondern in Availability | Abgrenzung |
+| FAC-VAL-009 | Sportartbezogene Prüfung erfolgt nicht in Facility, sondern in Application / Booking | Abgrenzung |
 
 ---
 
-## 22 Testfälle
+## 23 Testfälle
 
 | Testfall | Beschreibung |
 |---|---|
 | TF-FAC-001 | Sportanlagenliste laden |
 | TF-FAC-002 | Sportanlagen nach Stadtteil filtern |
 | TF-FAC-003 | Sportanlagen nach Typ filtern |
-| TF-FAC-004 | Sportanlagen nach Sportart filtern |
-| TF-FAC-005 | Sportanlage lesen |
-| TF-FAC-006 | Teileinheiten einer Sportanlage lesen |
-| TF-FAC-007 | Teileinheit validieren |
-| TF-FAC-008 | Sportkomplexe lesen |
-| TF-FAC-009 | Anlagen eines Sportkomplexes lesen |
-| TF-FAC-010 | Filterwerte laden |
-| TF-FAC-011 | Wizard kann Facility-Auswahl laden |
-| TF-FAC-012 | Availability kann Facility / Unit validieren |
-| TF-FAC-013 | Facility erzeugt keine Buchung |
-| TF-FAC-014 | Facility berechnet keine freien Zeiten |
+| TF-FAC-004 | Sportanlage lesen |
+| TF-FAC-005 | Teileinheiten einer Sportanlage lesen |
+| TF-FAC-006 | Teileinheit validieren |
+| TF-FAC-007 | Sportkomplexe lesen |
+| TF-FAC-008 | Anlagen eines Sportkomplexes lesen |
+| TF-FAC-009 | Facility-Filterwerte laden |
+| TF-FAC-010 | Wizard kann Facility-Auswahl laden |
+| TF-FAC-011 | Availability kann Facility / Unit validieren |
+| TF-FAC-012 | Facility erzeugt keine Buchung |
+| TF-FAC-013 | Facility berechnet keine freien Zeiten |
+| TF-FAC-014 | Facility liefert keine Sportarten als Facility-Attribut |
 
 ---
 
-## 23 Arbeitspakete
+## 24 Arbeitspakete
 
 | AP | Titel | Typ | Inhalt |
 |---|---|:---:|---|
-| AP-FAC-001 | Bestandsmapping | B/E | Tabellen, Stammdatenpackages, Beziehungen dokumentieren |
-| AP-FAC-002 | DTOs | N | Facility-, Unit-, Complex-, Filter-DTOs |
+| AP-FAC-001 | Bestandsmapping | B/E | Facility-Tabellen, Stammdatenpackages, Beziehungen dokumentieren |
+| AP-FAC-002 | DTOs | N | Facility-, Unit-, Complex-, Filter-DTOs ohne Sportartattribute |
 | AP-FAC-003 | REST Sportanlagen | N | Suche, Liste, Detail |
 | AP-FAC-004 | REST Teileinheiten | N | Units lesen und validieren |
 | AP-FAC-005 | REST Sportkomplexe | N | Komplexe und Zuordnung lesen |
-| AP-FAC-006 | REST Filterwerte | N | Stadtteil, Typ, Sportart, Gruppen |
-| AP-FAC-007 | Sportarten | E/N | Sportarten, Gruppen, Kategorien bereitstellen |
+| AP-FAC-006 | REST Facility-Filterwerte | N | Stadtteil, Typ, Komplex, FacilityGroup |
+| AP-FAC-007 | Abgrenzung Booking-Referenzdaten | E | Sportarten, Gruppen, Kategorien in Booking / Datenmodell verschieben |
 | AP-FAC-008 | Portal | N | Suche, Filter, Detail, Auswahlkomponenten |
 | AP-FAC-009 | Wizard-Anbindung | N | FacilitySelector, Unit-Auswahl |
 | AP-FAC-010 | Availability-Anbindung | N | Validierung und Filterbasis |
@@ -629,66 +691,70 @@ Die reine öffentliche Anzeige kann fachlich freigegeben werden. Detailtiefe und
 
 ---
 
-## 24 Aufwandstreiber
+## 25 Aufwandstreiber
 
 | Treiber | Einfluss |
 |---|---|
 | finale Tabellenzuordnung Sportanlagen / Teileinheiten | hoch |
-| Qualität der Stammdaten | hoch |
-| Anzahl Filter | mittel |
+| Qualität der Facility-Stammdaten | hoch |
+| Anzahl Facility-Filter | mittel |
 | Portal-Detailtiefe | mittel |
 | Integration mit Availability | hoch |
 | Integration mit Wizard / Application | hoch |
 | Kontext- und Sichtbarkeitsregeln | mittel bis hoch |
 | Performance bei ca. 500 Anlagen und ca. 1000 Teileinheiten | mittel |
 | spätere Stammdatenpflege im Adminbereich | hoch, falls V1 |
+| Abgrenzung Sportartfilter zu Booking / Application | mittel |
 
 ---
 
-## 25 Risiken
+## 26 Risiken
 
 | Risiko | Bewertung | Maßnahme |
 |---|---|---|
 | Sportstättenstruktur wird im Portal dupliziert | hoch | Bestand bleibt führend |
 | Teileinheiten werden nicht als buchbare Einheit erkannt | sehr hoch | Booking- und Availability-Abgleich |
 | Facility übernimmt Availability-Logik | hoch | klare Abgrenzung einhalten |
-| Filterwerte sind fachlich unvollständig | mittel | Filtermatrix aus Bestand ableiten |
+| Sportarten werden fälschlich als Facility-Attribute modelliert | hoch | Sportarten in Booking / Event führen |
+| Filterwerte sind fachlich unvollständig | mittel | Facility-Filtermatrix aus Bestand ableiten |
 | Tabellenzuordnung für Anlagen / Units ist unvollständig | hoch | Datenmodellkapitel ergänzen |
 | Kontextsichtbarkeit wird zu spät geklärt | hoch | Context-Abgleich vor API-Finalisierung |
 
 ---
 
-## 26 Offene Punkte
+## 27 Offene Punkte
 
 | ID | Status | Offener Punkt | Relevanz |
 |---|---|---|---|
 | OP-FAC-001 | Prüfen | finale Tabellen für Sportanlagen und Teileinheiten | sehr hoch |
 | OP-FAC-002 | Prüfen | vorhandene Facility-/Stammdatenpackages | hoch |
-| OP-FAC-003 | Prüfen | finale Filterliste V1: Stadtteil, Typ, Sportart, Barrierefreiheit usw. | hoch |
+| OP-FAC-003 | Prüfen | finale Facility-Filterliste V1: Stadtteil, Typ, Barrierefreiheit usw. | hoch |
 | OP-FAC-004 | Entscheiden | Detailtiefe der öffentlichen Portalansicht | mittel |
 | OP-FAC-005 | Prüfen | Kontext- und Sichtbarkeitsregeln für interne / externe Anzeige | hoch |
 | OP-FAC-006 | Prüfen | Stammdatenpflege über Administration in V1? | mittel |
 | OP-FAC-007 | Prüfen | Zuordnung Sportanlage zu Gebühren-/FacilityGroup | mittel bis hoch |
+| OP-FAC-008 | Erledigt / übertragen | Sportarten, Sportgruppen, Sportuntergruppen und Sportkategorien sind nicht Facility, sondern Booking / Event | hoch |
 
 ---
 
-## 27 Traceability-Matrix
+## 28 Traceability-Matrix
 
 | Quelle | Funktion | REST | Service | UI | Test | AP |
 |---|---|---|---|---|---|---|
 | Snapshot Sportstätten | Sportanlagen suchen | FAC-API-001 | FacilityService | FacilitySearchForm | TF-FAC-001/002/003 | AP-FAC-003/008 |
-| Snapshot Freie Zeiten | Filter für Verfügbarkeit | FAC-API-008 | FacilityFilterService | FacilityFilterPanel | TF-FAC-010/012 | AP-FAC-006/010 |
-| Snapshot / Booking.md | Teileinheit als buchbare Einheit | FAC-API-003/004 | FacilityUnitService | FacilityUnitList | TF-FAC-006/007 | AP-FAC-004 |
-| DDL `LHD_SPA_EVENT2UNIT` | Event zu Teileinheit | FAC-API-003/004 | FacilityUnitService / BookingService | BookingUnitList | TF-FAC-006 | AP-FAC-001/004 |
-| DDL `LHD_SPA_SPORTSCOMPLEXES` | Sportkomplexe | FAC-API-005 | SportsComplexService | SportsComplexSelector | TF-FAC-008 | AP-FAC-005 |
-| DDL `LHD_SPA_FACILITY2COMPLEX` | Anlagen im Komplex | FAC-API-006 | SportsComplexService | FacilityList | TF-FAC-009 | AP-FAC-005 |
-| DDL `LHD_SPA_FACILITYGROUPS` | Sportanlagengruppen | FAC-API-007 | FacilityGroupService | FacilityFilterPanel | TF-FAC-010 | AP-FAC-006 |
-| Wizard.md | Facility-Auswahl | FAC-API-001/003 | FacilityService | FacilitySelector | TF-FAC-011 | AP-FAC-009 |
-| Availability.md | Facility-Validierung | FAC-API-002/004 | FacilityService | AvailabilitySearchForm | TF-FAC-012 | AP-FAC-010 |
+| Snapshot Freie Zeiten | Facility-Filter für Verfügbarkeit | FAC-API-008 | FacilityFilterService | FacilityFilterPanel | TF-FAC-009/011 | AP-FAC-006/010 |
+| Snapshot / Booking.md | Teileinheit als buchbare Einheit | FAC-API-003/004 | FacilityUnitService | FacilityUnitList | TF-FAC-005/006 | AP-FAC-004 |
+| DDL `LHD_SPA_EVENT2UNIT` | Event zu Teileinheit | FAC-API-003/004 | FacilityUnitService / BookingService | BookingUnitList | TF-FAC-005 | AP-FAC-001/004 |
+| DDL `LHD_SPA_SPORTSCOMPLEXES` | Sportkomplexe | FAC-API-005 | SportsComplexService | SportsComplexSelector | TF-FAC-007 | AP-FAC-005 |
+| DDL `LHD_SPA_FACILITY2COMPLEX` | Anlagen im Komplex | FAC-API-006 | SportsComplexService | FacilityList | TF-FAC-008 | AP-FAC-005 |
+| DDL `LHD_SPA_FACILITYGROUPS` | Sportanlagengruppen | FAC-API-007 | FacilityGroupService | FacilityFilterPanel | TF-FAC-009 | AP-FAC-006 |
+| DDL `LHD_SPA_EVENTS` | Sportartbezug liegt am Event | Booking-API / Event-Referenzdaten | BookingService | Application / Booking UI | Booking-Tests | AP-FAC-007 |
+| Wizard.md | Facility-Auswahl | FAC-API-001/003 | FacilityService | FacilitySelector | TF-FAC-010 | AP-FAC-009 |
+| Availability.md | Facility-Validierung | FAC-API-002/004 | FacilityService | AvailabilitySearchForm | TF-FAC-011 | AP-FAC-010 |
 
 ---
 
-## 28 Änderungsauswirkungen
+## 29 Änderungsauswirkungen
 
 Änderungen an `Facility.md` wirken sich aus auf:
 
@@ -708,19 +774,27 @@ Die reine öffentliche Anzeige kann fachlich freigegeben werden. Detailtiefe und
 - `09_Testkonzept/Testfaelle.md`,
 - `12_Offene_Punkte/Offene_Punkte.md`.
 
+Zusätzliche Auswirkung dieser Korrektur:
+
+- `Booking.md` muss Sportarten, Sportgruppen, Sportuntergruppen und Sportkategorien als Event-/Buchungsreferenzdaten ausdrücklich aufnehmen.
+- `04_REST_API/Endpunkte.md` darf Sportarten-Endpunkte nicht unter Facility einsortieren.
+- `05_Datenmodell/Tabellen.md` muss die Tabellen `LHD_SPA_SPORT*` fachlich bei Booking / Event verorten.
+
 ---
 
-## 29 Ergebnis
+## 30 Ergebnis
 
-Die Domäne Facility ist als Bestandsdomäne beschrieben.
+Die Domäne Facility ist als Bestandsdomäne beschrieben und korrigiert.
 
-Die vorhandenen Sportstätten-, Sportkomplex-, Sportanlagen-, Teileinheiten- und Sportartenstammdaten bleiben führend.
+Die vorhandenen Sportstätten-, Sportkomplex-, Sportanlagen-, Teileinheiten- und FacilityGroup-Stammdaten bleiben führend.
+
+Nicht Bestandteil von Facility sind Sportarten, Sportgruppen, Sportuntergruppen und Sportkategorien. Diese werden über `LHD_SPA_EVENTS` an der Buchung / am Event referenziert und sind daher in Booking bzw. im Event-Datenmodell zu beschreiben.
 
 Die Umsetzung im Projekt besteht aus:
 
-- fachlicher Dokumentation des Bestands,
+- fachlicher Dokumentation des Facility-Bestands,
 - REST-Freilegung,
-- DTO-Definition,
+- DTO-Definition ohne Sportartattribute,
 - Portal-Suche,
 - Wizard-Auswahl,
 - Filterbereitstellung für Availability,
@@ -732,4 +806,5 @@ Nicht Bestandteil sind:
 - Buchungserstellung,
 - freie-Zeiten-Berechnung,
 - Gebührenberechnung,
+- Sportartenlogik,
 - neue Sportstättenstammdatenhaltung im Portal.
