@@ -7,7 +7,7 @@
 | Status | Konsolidierter Arbeitsstand |
 | Typ | Bestandsdomäne / REST-Freilegung |
 | Priorität | Sehr hoch |
-| Leitquellen | `Quellen/2026-07-05_Snapshot1.txt`, DDL-Dateien `LHD_SPA_EVENTS.sql`, `LHD_SPA_EVENT2UNIT.sql`, `LHD_SPA_EVENTCLASSES.sql`, `LHD_SPA_EVENTTYPES.sql`, `LHD_SPA_RECURRING_PATTERN.sql`, `LHD_SPA_OCC*.sql`, `LHD_SPA_BOOKING_NUMBERS.sql` |
+| Leitquellen | `Quellen/2026-07-05_Snapshot1.txt`, `LHD_SPA_EVENTS.sql`, `LHD_SPA_EVENT2UNIT.sql`, `LHD_SPA_EVENTCLASSES.sql`, `LHD_SPA_EVENTTYPES.sql`, `LHD_SPA_RECURRING_PATTERN.sql`, `LHD_SPA_OCC*.sql`, `LHD_SPA_BOOKING_NUMBERS.sql`, `LHD_SPA_SPORTCATEGORIES.sql`, `LHD_SPA_SPORTGROUPS.sql`, `LHD_SPA_SPORTSUBGROUPS.sql`, `LHD_SPA_SPORTTYPES.sql` |
 
 ---
 
@@ -15,33 +15,57 @@
 
 Die Domäne **Booking** beschreibt die bestehende SportFM-Buchungslogik.
 
-Sie ist keine Neuentwicklung.
+Booking ist eine Bestandsdomäne. Sie bleibt führend für Events, Buchungen, Belegungen, Wiederholungen, Stornierungen, Occurrences, Winner-Ermittlung, Kalenderlogik, Gebührenbezug und buchungsbezogene Sportreferenzen.
 
-Booking bleibt führende Bestandsdomäne für Belegungen, Wiederholungen, Stornierungen, Occurrences, Winner-Ermittlung, Gebührenbezug und Kalenderlogik.
-
-Ziel dieses Dokuments ist nicht die Neukonzeption der Buchungslogik, sondern die fachliche Dokumentation des Bestands und die Ableitung der notwendigen REST-, Portal- und Migrationsschnittstellen.
+Ziel ist nicht die Neuentwicklung der Buchungslogik, sondern die fachliche Dokumentation des Bestands und die kontrollierte REST-Freilegung.
 
 ---
 
-## 2 Projektbewertung
+## 2 Fachliche Einordnung
+
+Booking beschreibt **welche Nutzung** in einer Sportstätte stattfindet.
+
+Facility beschreibt **wo** die Nutzung stattfindet.
+
+Die Buchung / das Event verbindet daher:
+
+```text
+Facility-Bezug
+  Sportanlage / Teileinheit
+
+Nutzungsbezug
+  Eventtyp / Eventklasse
+  Sportart / Sportgruppe / Sportuntergruppe / Sportkategorie
+
+Zeitbezug
+  Datum / Uhrzeit / Wiederholungsmuster
+
+Ergebnis
+  Occurrence / Winner / Kalenderbelegung
+```
+
+Sportart, Sportgruppe, Sportuntergruppe und Sportkategorie sind keine Eigenschaften der Sportanlage. Sie werden am Event bzw. an der Buchung geführt.
+
+---
+
+## 3 Projektbewertung
 
 | Bereich | Bestand | Erweiterung | Neuentwicklung | Bewertung |
 |---|:---:|:---:|:---:|---|
 | Oracle | x | x |  | bestehendes Datenmodell bleibt führend |
-| PL/SQL | x | x |  | bestehende Packages `PA_LHD_SPA` und `PA_LHD_SPA_OCC` bleiben führend |
-| REST |  |  | x | neue fachliche Zugriffsschicht erforderlich |
-| DTO |  |  | x | fachliche DTOs erforderlich, keine Tabellen-DTOs |
-| Portal |  | x | x | Anzeige, Antragseinbindung, Kalender, freie Zeiten |
-| WPF | x | x |  | spätere Migration auf REST |
+| PL/SQL | x | x |  | `PA_LHD_SPA` und `PA_LHD_SPA_OCC` bleiben führend |
+| REST |  |  | x | fachliche Zugriffsschicht erforderlich |
+| DTO |  |  | x | fachliche DTOs, keine Tabellen-DTOs |
+| Portal |  | x | x | Anzeige, Kalender, eigene Buchungen, freie-Zeiten-Einstieg |
+| Facility | x | x |  | liefert Sportanlage und Teileinheit |
+| Availability | x | x |  | liest Belegung / freie Zeiten über Occurrence und Winner |
 | Tests |  | x | x | Regression gegen bestehende Buchungslogik erforderlich |
 
 ---
 
-## 3 Grundsatz
+## 4 Grundsatz
 
 Booking wird nicht neu entworfen.
-
-Die bestehende Buchungslogik ist produktiv, umgesetzt und fachlich führend.
 
 Verbindliche Grundsätze:
 
@@ -50,17 +74,22 @@ Verbindliche Grundsätze:
 - keine zweite Winner-Berechnung in .NET,
 - keine neue Gebührenlogik im Portal,
 - keine direkte Tabellen-API,
-- REST kapselt fachliche Operationen und nutzt den Bestand.
+- REST kapselt fachliche Operationen und nutzt den Bestand,
+- Sportart, Sportgruppe, Sportuntergruppe und Sportkategorie werden als Booking-/Event-Referenzdaten geführt.
 
 ---
 
-## 4 Bestand
-
-### 4.1 Fachliche Funktionen im Bestand
+## 5 Fachlicher Bestand
 
 Gesichert vorhanden sind:
 
 - Buchungen als Events,
+- Eventtypen,
+- Eventklassen,
+- Sportarten,
+- Sportgruppen,
+- Sportuntergruppen,
+- Sportkategorien,
 - wiederkehrende Belegungen,
 - wöchentliche Übungsbelegung,
 - 14-tägige Übungsbelegung,
@@ -77,68 +106,69 @@ Gesichert vorhanden sind:
 - Suche nach freien Zeiten,
 - Dokumenten- und Rechnungsbezug.
 
-### 4.2 Bestehende PL/SQL-Packages
-
-| Package | Zweck |
-|---|---|
-| `PA_LHD_SPA` | bestehendes zentrales Package für Wiederholungen, Stornierungen, Gebühren und weitere Buchungslogik |
-| `PA_LHD_SPA_OCC` | bestehendes Package für Occurrences und performante Zugrifflogik der Termine |
-
-### 4.3 Occurrence- und Winner-Logik
-
-Die performante Terminlogik ist im Bestand gelöst.
-
-`LHD_SPA_OCC` enthält konkrete Belegungsvorkommen.
-
-`LHD_SPA_OCC_WINNER` enthält die resultierende gültige Belegung.
-
-Die Aktualisierung erfolgt im Bestand stündlich und zusätzlich über einen Fast Path.
-
 ---
 
-## 5 Fachmodell Bestand
+## 6 Fachmodell Bestand
 
-### 5.1 Event als zentrales Buchungsobjekt
+### 6.1 Event als zentrales Buchungsobjekt
 
 In SportFM sind belegungsrelevante Vorgänge als Events modelliert.
-
-Das betrifft nicht nur klassische Nutzungsbuchungen, sondern auch Sperrungen, Reinigung, Schulbetrieb, GTA, Veranstaltungen und Stornierungen.
 
 ```text
 Event
   ↓
-Recurring Pattern, falls wiederkehrend
+EventType / EventClass
   ↓
-Event2Unit
+SportType / SportGroup / SportSubGroup / SportCategory
+  ↓
+Facility / Unit
+  ↓
+Recurring Pattern, falls wiederkehrend
   ↓
 Occurrence
   ↓
 Winner
 ```
 
-### 5.2 Buchbare Einheit
+Das Event enthält sowohl den Sportstättenbezug als auch den Nutzungsbezug.
 
-Die kleinste buchbare Einheit ist die **Teileinheit**.
+### 6.2 Facility-Bezug
 
-Sportanlagen dienen der fachlichen Gruppierung von Teileinheiten.
+Der Facility-Bezug erfolgt über:
 
-Sportkomplexe fassen Sportanlagen organisatorisch zusammen.
+- `LHD_SPA_EVENTS.ID_SPA`,
+- `LHD_SPA_EVENTS.SPA_NR`,
+- `LHD_SPA_EVENTS.IS_ALL_UNIT`,
+- `LHD_SPA_EVENT2UNIT.ID_UNIT`,
+- `LHD_SPA_OCC.SPA_ID`,
+- `LHD_SPA_OCC.UNIT_ID`,
+- `LHD_SPA_OCC_WINNER.SPA_ID`,
+- `LHD_SPA_OCC_WINNER.UNIT_ID`.
 
-```text
-Sportkomplex
-  └─ Sportanlage
-       └─ Teileinheit = buchbare Einheit
-```
+Die fachliche Struktur von Sportanlage und Teileinheit gehört zur Domäne Facility.
 
-Booking bezieht sich fachlich auf Teileinheiten.
+### 6.3 Sportreferenzdaten am Event
 
-Sportanlage und Sportkomplex werden für Suche, Darstellung, Filterung und Auswertung verwendet.
+Der Nutzungsbezug erfolgt über:
+
+- `LHD_SPA_EVENTS.ID_SPORTTYPE`,
+- `LHD_SPA_EVENTS.ID_SPORTGROUP`,
+- `LHD_SPA_EVENTS.ID_SPORTSUBGROUP`.
+
+Die referenzierten Tabellen gehören fachlich zu Booking / Event:
+
+| Tabelle | Zweck |
+|---|---|
+| `LHD_SPA_SPORTCATEGORIES` | Sportkategorien |
+| `LHD_SPA_SPORTGROUPS` | Sportgruppen |
+| `LHD_SPA_SPORTSUBGROUPS` | Sportuntergruppen |
+| `LHD_SPA_SPORTTYPES` | Sportarten |
 
 ---
 
-## 6 Buchungsarten / Eventtypen
+## 7 Buchungsarten / Eventtypen
 
-Aktuell produktiv relevante Buchungs- bzw. Belegungsarten sind:
+Produktiv relevante Buchungs- bzw. Belegungsarten sind:
 
 - Sperrung,
 - Reinigung,
@@ -151,36 +181,34 @@ Aktuell produktiv relevante Buchungs- bzw. Belegungsarten sind:
 
 Sperrungen, Reinigung, Schulbetrieb und GTA sind ebenfalls Events in `LHD_SPA_EVENTS`.
 
-Die resultierende Belegung wird aus den Events über Occurrence und Winner berechnet.
+Die resultierende Belegung wird aus Events über Occurrence und Winner berechnet.
 
 ---
 
-## 7 Statusmodell Bestand
+## 8 Statusmodell Bestand
 
-### 7.1 Events
+### 8.1 Events
 
 | Wert | Bedeutung |
 |---:|---|
 | `1` | aktiv |
 | `-1` | gelöscht |
 
-Buchungen werden nicht als komplexes Statusmodell historisiert.
+Buchungen werden nicht als neues Portalstatusmodell geführt.
 
 Sie enden fachlich über ein Datum oder werden durch entsprechende Events, insbesondere Stornierungen, abgebildet.
 
-### 7.2 Stornierung
+### 8.2 Stornierung
 
 Eine Stornierung ist fachlich eine eigene Buchung mit dem Typ Stornierung.
 
-Die Stornierung ist keine einfache Statusänderung am ursprünglichen Event.
-
-Auslöser im Bestand sind z. B. E-Mail, Anruf oder Sachbearbeitung.
+Sie ist keine einfache Statusänderung am ursprünglichen Event.
 
 ---
 
-## 8 Relevante Oracle-Tabellen
+## 9 Relevante Oracle-Tabellen
 
-### 8.1 Buchungskern
+### 9.1 Buchungskern
 
 | Tabelle | Zweck |
 |---|---|
@@ -192,7 +220,16 @@ Auslöser im Bestand sind z. B. E-Mail, Anruf oder Sachbearbeitung.
 | `LHD_SPA_BOOKING_NUMBERS` | Buchungsnummern je Jahr |
 | `LHD_SPA_RECURRING_PATTERN` | Wiederholungsmuster |
 
-### 8.2 Occurrence / Winner
+### 9.2 Sportreferenzdaten für Events
+
+| Tabelle | Zweck |
+|---|---|
+| `LHD_SPA_SPORTCATEGORIES` | Sportkategorien |
+| `LHD_SPA_SPORTGROUPS` | Sportgruppen |
+| `LHD_SPA_SPORTSUBGROUPS` | Sportuntergruppen |
+| `LHD_SPA_SPORTTYPES` | Sportarten |
+
+### 9.3 Occurrence / Winner
 
 | Tabelle | Zweck |
 |---|---|
@@ -202,17 +239,11 @@ Auslöser im Bestand sind z. B. E-Mail, Anruf oder Sachbearbeitung.
 | `LHD_SPA_OCC_EVENT_DRT` | technische Dirty-/Retry-Struktur für Event-Occurrences |
 | `LHD_SPA_OCC_WINNER_DRT` | technische Dirty-/Retry-Struktur für Winner |
 
-### 8.3 Weitere Zuordnung
-
-| Tabelle | Zweck |
-|---|---|
-| `LHD_SPA_FACILITYGROUPS` | Sportanlagengruppen / Gebühren- und Strukturbezug |
-
 ---
 
-## 9 Wichtige Spalten aus dem Bestand
+## 10 Wichtige Spalten aus dem Bestand
 
-### 9.1 `LHD_SPA_EVENTS`
+### 10.1 `LHD_SPA_EVENTS`
 
 Zentrale Spalten:
 
@@ -242,9 +273,12 @@ Zentrale Spalten:
 - `DEPARTMENT`,
 - `IS_COMPLEXEVENT`.
 
-### 9.2 `LHD_SPA_RECURRING_PATTERN`
+### 10.2 `LHD_SPA_EVENT2UNIT`
 
-Zentrale Spalten:
+- `ID_EVENT`,
+- `ID_UNIT`.
+
+### 10.3 `LHD_SPA_RECURRING_PATTERN`
 
 - `ID_EVENT`,
 - `FREQ`,
@@ -253,16 +287,7 @@ Zentrale Spalten:
 - `DAYS`,
 - `HOLIDAYS`.
 
-### 9.3 `LHD_SPA_EVENT2UNIT`
-
-Zentrale Spalten:
-
-- `ID_EVENT`,
-- `ID_UNIT`.
-
-### 9.4 `LHD_SPA_OCC`
-
-Zentrale Spalten:
+### 10.4 `LHD_SPA_OCC`
 
 - `ID`,
 - `EVENT_ID`,
@@ -279,9 +304,7 @@ Zentrale Spalten:
 - `HOLIDAYS_MASK`,
 - `CREATED_TS`.
 
-### 9.5 `LHD_SPA_OCC_WINNER`
-
-Zentrale Spalten:
+### 10.5 `LHD_SPA_OCC_WINNER`
 
 - `WINNER_ID`,
 - `SPA_ID`,
@@ -299,14 +322,111 @@ Zentrale Spalten:
 
 ---
 
-## 10 Abgrenzung zu anderen Domänen
+## 11 Business Objects
+
+| Objekt | Zweck | Persistenz |
+|---|---|---|
+| `BookingEvent` | zentrale Buchung / Belegung | Bestand |
+| `EventType` | Buchungs-/Belegungsart | Bestand |
+| `EventClass` | Eventklasse | Bestand |
+| `BookingNumber` | Buchungsnummer | Bestand |
+| `RecurringPattern` | Wiederholungsmuster | Bestand |
+| `EventUnitAssignment` | Zuordnung Event zu Teileinheit | Bestand |
+| `Occurrence` | konkretes Belegungsvorkommen | Bestand |
+| `OccurrenceWinner` | resultierende gültige Belegung | Bestand |
+| `SportCategory` | Sportkategorie der Nutzung | Bestand |
+| `SportGroup` | Sportgruppe der Nutzung | Bestand |
+| `SportSubGroup` | Sportuntergruppe der Nutzung | Bestand |
+| `SportType` | Sportart der Nutzung | Bestand |
+
+### 11.1 Klassendiagramm
+
+```mermaid
+classDiagram
+    class BookingEvent {
+      +string Id
+      +string BookingNumber
+      +string Title
+      +datetime DateBegin
+      +datetime DateEnd
+      +time TimeBegin
+      +time TimeEnd
+      +string State
+      +string SportTypeId
+      +string SportGroupId
+      +string SportSubGroupId
+      +string FacilityId
+    }
+
+    class EventType {
+      +string Id
+      +string Name
+    }
+
+    class EventUnitAssignment {
+      +string EventId
+      +string UnitId
+    }
+
+    class RecurringPattern {
+      +string EventId
+      +string Freq
+      +int Interval
+      +string Days
+      +string Holidays
+    }
+
+    class Occurrence {
+      +string Id
+      +string EventId
+      +string FacilityId
+      +string UnitId
+      +datetime Start
+      +datetime End
+    }
+
+    class SportType {
+      +string Id
+      +string Name
+      +string SportGroupId
+    }
+
+    class SportGroup {
+      +string Id
+      +string Name
+      +string SportCategoryId
+    }
+
+    class SportSubGroup {
+      +string Id
+      +string Name
+    }
+
+    class SportCategory {
+      +string Id
+      +string Name
+    }
+
+    BookingEvent --> EventType
+    BookingEvent --> EventUnitAssignment
+    BookingEvent --> RecurringPattern
+    BookingEvent --> Occurrence
+    BookingEvent --> SportType
+    BookingEvent --> SportGroup
+    BookingEvent --> SportSubGroup
+    SportGroup --> SportCategory
+```
+
+---
+
+## 12 Abgrenzung zu anderen Domänen
 
 | Domäne | Beziehung zu Booking |
 |---|---|
+| `Facility` | liefert Sportkomplex, Sportanlage und Teileinheit; keine Sportartenlogik |
+| `Availability` | liest freie Zeiten und Belegung aus Occurrence / Winner |
 | `Application` | erfasst Anträge, erzeugt aber keine Buchung selbst |
 | `Workflow` | steuert Bearbeitung und Genehmigung, führt aber keine Buchungslogik aus |
-| `Availability` | liest freie Zeiten und Belegung aus Occurrence / Winner |
-| `Facility` | liefert Sportkomplex, Sportanlage und Teileinheit |
 | `Document` | stellt Dokumente zu Buchungen bereit |
 | `Charge` | stellt Gebühreninformationen bereit, Berechnung bleibt Bestand |
 | `Invoice` | stellt Rechnungen bereit, Erzeugung bleibt Bestand |
@@ -315,7 +435,24 @@ Zentrale Spalten:
 
 ---
 
-## 11 REST-Strategie
+## 13 Fachliche Regeln
+
+| ID | Regel |
+|---|---|
+| BOOK-BR-001 | Die bestehende Buchungslogik bleibt führend. |
+| BOOK-BR-002 | Booking berechnet Occurrences und Winner nicht neu in .NET. |
+| BOOK-BR-003 | Sportart, Sportgruppe, Sportuntergruppe und Sportkategorie gehören fachlich zum Event. |
+| BOOK-BR-004 | Sportanlage und Teileinheit werden über Facility identifiziert. |
+| BOOK-BR-005 | Eine Buchung kann mehreren Teileinheiten zugeordnet sein. |
+| BOOK-BR-006 | Stornierungen werden als eigene Events abgebildet. |
+| BOOK-BR-007 | Portal erzeugt keine Gebühren. |
+| BOOK-BR-008 | REST bildet fachliche Operationen ab, keine Tabellenkopie. |
+| BOOK-BR-009 | Buchungen sind nur im zulässigen Kontext sichtbar. |
+| BOOK-BR-010 | Kalenderdaten stammen aus Bestandstabellen / Bestandspackages. |
+
+---
+
+## 14 REST-Strategie
 
 Die REST-API ist eine fachliche Zugriffsschicht auf den Bestand.
 
@@ -328,12 +465,13 @@ Fachliche DTOs sind erforderlich, z. B.:
 - `BookingCalendarItemDto`,
 - `BookingSeriesDto`,
 - `BookingUnitDto`,
+- `BookingSportReferenceDto`,
 - `BookingChargeInfoDto`,
 - `BookingDocumentInfoDto`.
 
 ---
 
-## 12 REST-Endpunkte V1
+## 15 REST-Endpunkte V1
 
 | ID | Methode | Pfad | Zweck |
 |---|---|---|---|
@@ -346,103 +484,166 @@ Fachliche DTOs sind erforderlich, z. B.:
 | BOOK-API-007 | `GET` | `/api/v1/bookings/{id}/invoices` | Rechnungsbezüge zur Buchung lesen |
 | BOOK-API-008 | `GET` | `/api/v1/calendar` | Kalenderdaten aus Buchungen / Winner lesen |
 | BOOK-API-009 | `GET` | `/api/v1/event-types` | Eventtypen lesen |
+| BOOK-API-010 | `GET` | `/api/v1/sport-types` | Sportarten lesen |
+| BOOK-API-011 | `GET` | `/api/v1/sport-groups` | Sportgruppen lesen |
+| BOOK-API-012 | `GET` | `/api/v1/sport-subgroups` | Sportuntergruppen lesen |
+| BOOK-API-013 | `GET` | `/api/v1/sport-categories` | Sportkategorien lesen |
 
 Ändernde Booking-Endpunkte werden erst definiert, wenn die konkrete Portal- und WPF-Migration dies erfordert.
 
-Für V1 steht die kontrollierte Bereitstellung des Bestands im Vordergrund.
+---
+
+## 16 DTOs
+
+### 16.1 `BookingDto`
+
+| Feld | Typ | Pflicht |
+|---|---|:---:|
+| `bookingId` | string | ja |
+| `bookingNumber` | string | nein |
+| `title` | string | ja |
+| `eventType` | string | ja |
+| `facilityId` | string | nein |
+| `facilityName` | string | nein |
+| `sportType` | string | nein |
+| `dateBegin` | datetime | ja |
+| `dateEnd` | datetime | nein |
+| `state` | string | ja |
+
+### 16.2 `BookingDetailDto`
+
+| Feld | Typ | Pflicht |
+|---|---|:---:|
+| `bookingId` | string | ja |
+| `bookingNumber` | string | nein |
+| `title` | string | ja |
+| `description` | string | nein |
+| `eventType` | string | ja |
+| `eventClass` | string | nein |
+| `facility` | object | nein |
+| `units` | array | nein |
+| `sport` | `BookingSportReferenceDto` | nein |
+| `recurringPattern` | object | nein |
+| `documents` | array | nein |
+| `charges` | array | nein |
+| `invoices` | array | nein |
+
+### 16.3 `BookingSportReferenceDto`
+
+| Feld | Typ | Pflicht |
+|---|---|:---:|
+| `sportTypeId` | string | nein |
+| `sportTypeName` | string | nein |
+| `sportGroupId` | string | nein |
+| `sportGroupName` | string | nein |
+| `sportSubGroupId` | string | nein |
+| `sportSubGroupName` | string | nein |
+| `sportCategoryId` | string | nein |
+| `sportCategoryName` | string | nein |
+
+### 16.4 `SportTypeDto`
+
+| Feld | Typ | Pflicht |
+|---|---|:---:|
+| `id` | string | ja |
+| `name` | string | ja |
+| `sportGroupId` | string | nein |
+| `active` | boolean | nein |
 
 ---
 
-## 13 Portal-Sicht
+## 17 Services und Repositories
 
-Das Portal darf im Bereich Booking:
+| Service | Verantwortung |
+|---|---|
+| `BookingService` | Buchungen suchen und lesen |
+| `BookingDetailService` | Details, Units, Sportreferenzen, Dokumente, Gebühren zusammenstellen |
+| `BookingCalendarService` | Kalenderdaten über Bestand bereitstellen |
+| `BookingOccurrenceService` | Occurrences lesen, nicht neu berechnen |
+| `BookingSportReferenceService` | Sportarten, Sportgruppen, Sportuntergruppen und Sportkategorien lesen |
+| `BookingVisibilityService` | Kontext- und Rollenprüfung |
+| `BookingIntegrationService` | Anbindung an Facility, Availability, Document, Charge, Invoice |
 
-- eigene Buchungen anzeigen,
-- Buchungsdetails anzeigen,
-- Kalenderinformationen anzeigen,
-- zugeordnete Dokumente anzeigen,
-- zugeordnete Rechnungen anzeigen,
-- freie Zeiten über `Availability` anzeigen,
-- aus freien Zeiten in einen Antrag wechseln.
-
-Das Portal darf nicht:
-
-- Winner berechnen,
-- Occurrences berechnen,
-- Gebühren berechnen,
-- Buchungen direkt an der Datenbank verändern,
-- SAP-Prozesse auslösen.
-
----
-
-## 14 Sichtbarkeit und Kontext
-
-Buchungen sind nur im jeweils zulässigen SportFM-Kontext sichtbar.
-
-Der Kontext kann sich aus einer OE oder optional aus einer Abteilung ergeben.
-
-Abteilungen ohne eigenen SportFM-Kontext nutzen den Kontext der übergeordneten OE.
-
-Die genaue Kontextprüfung liegt in der Domäne `Context`.
+| Repository | Zweck |
+|---|---|
+| `BookingRepository` | Events / Buchungen lesen |
+| `BookingUnitRepository` | Event2Unit lesen |
+| `BookingOccurrenceRepository` | Occurrences und Winner lesen |
+| `BookingSportReferenceRepository` | Sportreferenzdaten lesen |
+| `BookingNumberRepository` | Buchungsnummern lesen |
 
 ---
 
-## 15 Blazor-Frontend
+## 18 Oracle und PL/SQL
 
-### 15.1 Seiten / Bereiche
+### 18.1 Bestehende Packages
 
-| ID | Seite / Bereich | Zweck |
+| Package | Zweck |
+|---|---|
+| `PA_LHD_SPA` | zentrales Bestandspackage für Wiederholungen, Stornierungen, Gebühren und weitere Buchungslogik |
+| `PA_LHD_SPA_OCC` | Bestandspackage für Occurrences und performante Terminzugriffe |
+
+### 18.2 Zielkapselung
+
+| Package | Zweck | Status |
 |---|---|---|
-| BOOK-UI-001 | Meine Buchungen | kontextbezogene Buchungsliste |
-| BOOK-UI-002 | Buchungsdetails | Details zu einer Buchung |
-| BOOK-UI-003 | Kalender | Anzeige von Belegungen / Winner-Daten |
-| BOOK-UI-004 | Buchungsdokumente | Dokumente zur Buchung anzeigen |
-| BOOK-UI-005 | Buchungsrechnungen | Rechnungsbezüge anzeigen |
+| bestehende Buchungspackages | Buchungslogik / Occurrences / Winner | Bestand führend |
+| `PA_LHD_SPA_BOOKING` | REST-taugliche Kapselung für Buchungsliste, Details und Referenzdaten | vorgeschlagene Zielstruktur, noch zu bestätigen |
 
-### 15.2 Komponenten
+---
+
+## 19 Blazor-Frontend
+
+| Seite / Bereich | Zweck |
+|---|---|
+| Meine Buchungen | kontextbezogene Buchungsliste |
+| Buchungsdetails | Details zu einer Buchung inklusive Facility- und Sportreferenzen |
+| Kalender | Anzeige von Belegungen / Winner-Daten |
+| Buchungsdokumente | Dokumente zur Buchung anzeigen |
+| Buchungsrechnungen | Rechnungsbezüge anzeigen |
 
 | Komponente | Zweck |
 |---|---|
 | `BookingList` | Buchungsliste |
 | `BookingDetail` | Buchungsdetail |
 | `BookingCalendar` | Kalenderanzeige |
-| `BookingStatusBadge` | Statusanzeige aktiv / gelöscht |
+| `BookingSportInfo` | Sportart / Sportgruppe / Kategorie anzeigen |
 | `BookingUnitList` | Teileinheiten anzeigen |
 | `BookingDocumentList` | Dokumente zur Buchung |
 | `BookingInvoiceList` | Rechnungen zur Buchung |
 
 ---
 
-## 16 Berechtigungen
+## 20 Berechtigungen
 
 | Berechtigung | Zweck |
 |---|---|
 | `Booking.Read` | Buchungen im zulässigen Kontext lesen |
 | `Booking.Calendar.Read` | Kalenderdaten lesen |
 | `Booking.Occurrences.Read` | Occurrences lesen |
+| `Booking.ReferenceData.Read` | Eventtypen und Sportreferenzdaten lesen |
 | `Booking.Documents.Read` | Dokumente zur Buchung lesen |
 | `Booking.Charges.Read` | Gebühreninformationen lesen |
 | `Booking.Invoices.Read` | Rechnungsbezüge lesen |
 
-Ändernde Berechtigungen werden erst mit konkreten Änderungsfunktionen definiert.
-
 ---
 
-## 17 Validierungen
+## 21 Validierungen
 
 | ID | Validierung | Ebene |
 |---|---|---|
-| BOOK-VAL-001 | Buchung existiert | REST / BookingService |
+| BOOK-VAL-001 | Buchung existiert | BookingService |
 | BOOK-VAL-002 | Buchung ist nicht gelöscht, sofern keine gelöschten Daten angefordert werden | BookingService |
 | BOOK-VAL-003 | Benutzer besitzt zulässigen Kontext | Context |
-| BOOK-VAL-004 | Benutzer darf Dokumente zur Buchung sehen | Context / Document |
-| BOOK-VAL-005 | Benutzer darf Rechnungen zur Buchung sehen | Context / Invoice |
-| BOOK-VAL-006 | Kalenderzeitraum ist begrenzt | REST / Performance |
-| BOOK-VAL-007 | Teileinheit gehört zur Buchung | BookingService |
+| BOOK-VAL-004 | Teileinheit gehört zur Buchung | BookingService |
+| BOOK-VAL-005 | Sportart / Sportgruppe / Sportuntergruppe ist gültig | BookingSportReferenceService |
+| BOOK-VAL-006 | Benutzer darf Dokumente zur Buchung sehen | Context / Document |
+| BOOK-VAL-007 | Benutzer darf Rechnungen zur Buchung sehen | Context / Invoice |
+| BOOK-VAL-008 | Kalenderzeitraum ist begrenzt | REST / Performance |
 
 ---
 
-## 18 Testfälle
+## 22 Testfälle
 
 | Testfall | Beschreibung |
 |---|---|
@@ -450,97 +651,89 @@ Die genaue Kontextprüfung liegt in der Domäne `Context`.
 | TF-BOOK-002 | fremde Buchung nicht anzeigen |
 | TF-BOOK-003 | Buchungsdetails lesen |
 | TF-BOOK-004 | zugeordnete Teileinheiten lesen |
-| TF-BOOK-005 | Occurrences einer Buchung lesen |
-| TF-BOOK-006 | Kalenderdaten laden |
-| TF-BOOK-007 | Dokumente zur Buchung lesen |
-| TF-BOOK-008 | Rechnungsbezüge zur Buchung lesen |
-| TF-BOOK-009 | gelöschte Buchung standardmäßig ausblenden |
-| TF-BOOK-010 | REST nutzt Bestand und erzeugt keine eigene Occurrence-Logik |
-| TF-BOOK-011 | REST nutzt Bestand und erzeugt keine eigene Winner-Logik |
-| TF-BOOK-012 | Performance Kalenderabfrage prüfen |
+| TF-BOOK-005 | Sportart / Sportgruppe / Sportuntergruppe zur Buchung anzeigen |
+| TF-BOOK-006 | Sportreferenzdaten lesen |
+| TF-BOOK-007 | Occurrences einer Buchung lesen |
+| TF-BOOK-008 | Kalenderdaten laden |
+| TF-BOOK-009 | Dokumente zur Buchung lesen |
+| TF-BOOK-010 | Rechnungsbezüge zur Buchung lesen |
+| TF-BOOK-011 | gelöschte Buchung standardmäßig ausblenden |
+| TF-BOOK-012 | REST nutzt Bestand und erzeugt keine eigene Occurrence-Logik |
+| TF-BOOK-013 | REST nutzt Bestand und erzeugt keine eigene Winner-Logik |
 
 ---
 
-## 19 Arbeitspakete
+## 23 Arbeitspakete
 
 | AP | Titel | Inhalt |
 |---|---|---|
 | AP-BOOK-001 | Bestandsmapping | Tabellen, Packages, bestehende Logik dokumentieren |
-| AP-BOOK-002 | DTOs | Booking-, Kalender- und Detail-DTOs definieren |
+| AP-BOOK-002 | DTOs | Booking-, Kalender-, Detail- und Sportreferenz-DTOs definieren |
 | AP-BOOK-003 | REST Lesen | Leseendpunkte für Buchungen |
-| AP-BOOK-004 | Kalenderzugriff | REST-Zugriff auf Kalender-/Winner-Daten |
-| AP-BOOK-005 | Occurrence-Zugriff | vorhandene Occurrence-Daten bereitstellen |
-| AP-BOOK-006 | Dokumentenbezug | Document-Domäne anbinden |
-| AP-BOOK-007 | Gebührenbezug | Charge-Domäne anbinden |
-| AP-BOOK-008 | Rechnungsbezug | Invoice-Domäne anbinden |
-| AP-BOOK-009 | Kontextprüfung | Context-Domäne anbinden |
-| AP-BOOK-010 | Portal | Buchungsliste, Detail, Kalenderbereiche |
-| AP-BOOK-011 | Tests | Regression, REST, Kontext, Performance |
-| AP-BOOK-012 | Dokumentation | API- und Bestandsdokumentation |
+| AP-BOOK-004 | REST Referenzdaten | Eventtypen, Sportarten, Gruppen, Kategorien bereitstellen |
+| AP-BOOK-005 | Kalenderzugriff | REST-Zugriff auf Kalender-/Winner-Daten |
+| AP-BOOK-006 | Occurrence-Zugriff | vorhandene Occurrence-Daten bereitstellen |
+| AP-BOOK-007 | Dokumentenbezug | Document-Domäne anbinden |
+| AP-BOOK-008 | Gebührenbezug | Charge-Domäne anbinden |
+| AP-BOOK-009 | Rechnungsbezug | Invoice-Domäne anbinden |
+| AP-BOOK-010 | Kontextprüfung | Context-Domäne anbinden |
+| AP-BOOK-011 | Portal | Buchungsliste, Detail, Kalenderbereiche |
+| AP-BOOK-012 | Tests | Regression, REST, Kontext, Performance |
 
 ---
 
-## 20 Aufwandstreiber
-
-| Treiber | Einfluss |
-|---|---|
-| Mapping Bestandstabellen zu fachlichen DTOs | mittel |
-| Kontextprüfung für OE und optionale Abteilungskontexte | hoch |
-| Kalenderperformance | hoch |
-| Abgrenzung Portal-Sicht / interne WPF-Sicht | mittel |
-| Dokumenten- und Rechnungsbezug | mittel |
-| spätere schreibende WPF-Migration | hoch, aber nicht V1 dieses Dokuments |
-| Regression gegen bestehende Logik | hoch |
-
----
-
-## 21 Risiken
+## 24 Risiken
 
 | Risiko | Bewertung | Maßnahme |
 |---|---|---|
 | REST bildet Tabellen statt Fachfunktionen ab | hoch | fachliche DTOs und Services verwenden |
 | Portal berechnet eigene Belegungslogik | sehr hoch | Occurrence / Winner ausschließlich aus Bestand nutzen |
+| Sportarten werden fälschlich Facility zugeordnet | hoch | Sportreferenzen im Booking-Modell führen |
 | Kontextprüfung unvollständig | hoch | Context-Domäne verbindlich anbinden |
-| gelöschte Buchungen werden falsch angezeigt | mittel | Status `1` / `-1` konsequent berücksichtigen |
 | Kalenderabfragen werden zu groß | hoch | Zeitraumgrenzen, Filter und Caching prüfen |
 | bestehende Package-Logik wird umgangen | hoch | `PA_LHD_SPA` / `PA_LHD_SPA_OCC` als führend behandeln |
 
 ---
 
-## 22 Offene Punkte
+## 25 Offene Punkte
 
-| ID | Status | Offener Punkt | Relevanz |
-|---|---|---|---|
-| O-BOOK-001 | Prüfen | Welche schreibenden Booking-Funktionen werden in V1 tatsächlich über REST benötigt? | hoch |
-| O-BOOK-002 | Prüfen | Welche internen WPF-Funktionen werden zuerst auf REST migriert? | mittel |
-| O-BOOK-003 | Prüfen | Welche Kalenderdetailtiefe ist im Portal zulässig? | hoch |
-| O-BOOK-004 | Entscheiden | Zeitraumgrenzen für Kalender- und Occurrence-Endpunkte | hoch |
+| ID | Offener Punkt | Relevanz |
+|---|---|---|
+| OP-BOOK-001 | Welche schreibenden Booking-Funktionen werden in V1 tatsächlich über REST benötigt? | hoch |
+| OP-BOOK-002 | Welche internen WPF-Funktionen werden zuerst auf REST migriert? | mittel |
+| OP-BOOK-003 | Welche Kalenderdetailtiefe ist im Portal zulässig? | hoch |
+| OP-BOOK-004 | Zeitraumgrenzen für Kalender- und Occurrence-Endpunkte | hoch |
+| OP-BOOK-005 | finale fachliche Hierarchie SportCategory / SportGroup / SportSubGroup / SportType im Datenmodellkapitel | mittel |
 
 ---
 
-## 23 Traceability-Matrix
+## 26 Traceability-Matrix
 
 | Quelle | Funktion | REST | Service | UI | Test | AP |
 |---|---|---|---|---|---|---|
 | Snapshot / Bestand | Buchungen als Events | BOOK-API-001/002 | BookingService | BookingList / BookingDetail | TF-BOOK-001/003 | AP-BOOK-003 |
-| DDL `LHD_SPA_EVENTS` | Eventdetails | BOOK-API-002 | BookingService | BookingDetail | TF-BOOK-003 | AP-BOOK-002/003 |
+| DDL `LHD_SPA_EVENTS` | Eventdetails und Sportreferenzen | BOOK-API-002 | BookingDetailService | BookingDetail / BookingSportInfo | TF-BOOK-003/005 | AP-BOOK-002/003 |
+| DDL `LHD_SPA_SPORTTYPES` | Sportarten | BOOK-API-010 | BookingSportReferenceService | BookingSportInfo | TF-BOOK-006 | AP-BOOK-004 |
+| DDL `LHD_SPA_SPORTGROUPS` | Sportgruppen | BOOK-API-011 | BookingSportReferenceService | BookingSportInfo | TF-BOOK-006 | AP-BOOK-004 |
+| DDL `LHD_SPA_SPORTSUBGROUPS` | Sportuntergruppen | BOOK-API-012 | BookingSportReferenceService | BookingSportInfo | TF-BOOK-006 | AP-BOOK-004 |
+| DDL `LHD_SPA_SPORTCATEGORIES` | Sportkategorien | BOOK-API-013 | BookingSportReferenceService | BookingSportInfo | TF-BOOK-006 | AP-BOOK-004 |
 | DDL `LHD_SPA_EVENT2UNIT` | Teileinheiten | BOOK-API-003 | BookingService | BookingUnitList | TF-BOOK-004 | AP-BOOK-003 |
-| DDL `LHD_SPA_RECURRING_PATTERN` | Wiederholungen | BOOK-API-002/004 | BookingService | BookingDetail | TF-BOOK-005 | AP-BOOK-005 |
-| DDL `LHD_SPA_OCC` | Occurrences | BOOK-API-004 | BookingService / Availability | BookingCalendar | TF-BOOK-005 | AP-BOOK-005 |
-| DDL `LHD_SPA_OCC_WINNER` | gültige Belegung | BOOK-API-008 | BookingService / Availability | BookingCalendar | TF-BOOK-006 | AP-BOOK-004 |
-| Bestand `PA_LHD_SPA_OCC` | performante Zugrifflogik | BOOK-API-004/008 | BookingService | BookingCalendar | TF-BOOK-010/011 | AP-BOOK-004/005 |
-| Context.md | Sichtbarkeit | alle BOOK-APIs | ContextService | alle Booking-Bereiche | TF-BOOK-002 | AP-BOOK-009 |
+| DDL `LHD_SPA_OCC` | Occurrences | BOOK-API-004 | BookingOccurrenceService | BookingCalendar | TF-BOOK-007 | AP-BOOK-006 |
+| DDL `LHD_SPA_OCC_WINNER` | gültige Belegung | BOOK-API-008 | BookingCalendarService | BookingCalendar | TF-BOOK-008 | AP-BOOK-005 |
+| Facility.md | Sportstättenstruktur | BOOK-API-002/003 | BookingIntegrationService | BookingDetail | TF-BOOK-004 | AP-BOOK-002/011 |
+| Context.md | Sichtbarkeit | alle BOOK-APIs | BookingVisibilityService | alle Booking-Bereiche | TF-BOOK-002 | AP-BOOK-010 |
 
 ---
 
-## 24 Änderungsauswirkungen
+## 27 Änderungsauswirkungen
 
 Änderungen an `Booking.md` wirken sich aus auf:
 
-- `03_Domaenen/Application.md`,
-- `03_Domaenen/Workflow.md`,
-- `03_Domaenen/Availability.md`,
 - `03_Domaenen/Facility.md`,
+- `03_Domaenen/Application.md`,
+- `03_Domaenen/Wizard.md`,
+- `03_Domaenen/Availability.md`,
+- `03_Domaenen/Workflow.md`,
 - `03_Domaenen/Document.md`,
 - `03_Domaenen/Charge.md`,
 - `03_Domaenen/Invoice.md`,
@@ -556,21 +749,12 @@ Die genaue Kontextprüfung liegt in der Domäne `Context`.
 
 ---
 
-## 25 Ergebnis
+## 28 Ergebnis
 
 Die Domäne Booking ist als Bestandsdomäne beschrieben.
 
-Sie wird nicht neu konzipiert.
+Sie umfasst Events, Buchungen, Eventtypen, Eventklassen, Wiederholungen, Stornierungen, Occurrences, Winner, Kalenderlogik und buchungsbezogene Sportreferenzdaten.
+
+Sportarten, Sportgruppen, Sportuntergruppen und Sportkategorien sind Teil des Event-/Booking-Modells und nicht Teil von Facility.
 
 Die bestehende Oracle- und PL/SQL-Logik bleibt führend.
-
-Die Umsetzung im Projekt besteht aus:
-
-- fachlicher Dokumentation des Bestands,
-- DTO- und REST-Freilegung,
-- Kontext- und Berechtigungsprüfung,
-- Portal-Anzeige,
-- späterer WPF-Migration,
-- Regression gegen die bestehende Logik.
-
-Die konkrete Kalkulation hängt vor allem von der gewünschten REST-Tiefe, der Kalenderdetailtiefe, der Kontextprüfung und dem Umfang der ersten WPF-Migrationsschritte ab.
