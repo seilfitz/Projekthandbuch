@@ -4,7 +4,7 @@
 |---|---|
 | Kapitel | 05 – Datenmodell |
 | Dokument | Datenmodell Übersicht |
-| Status | Konsolidierter Arbeitsstand, Teil 2 |
+| Status | Fertiggestellt |
 | Typ | Fachliches Übersichts- und Referenzdokument |
 | Priorität | Sehr hoch |
 | Leitquellen | `Quellen/2026-07-05_Snapshot1.txt`, Lastenheft, Oracle-DDLs, Kapitel `03_Domaenen`, Architekturkapitel, fachliche Korrekturen Facility ↔ Booking und Charge ↔ Invoice |
@@ -60,14 +60,16 @@ Die REST-API beschreibt anschließend, wie diese Objekte kontrolliert verfügbar
 
 Diese Übersicht umfasst:
 
-- fachliche Business Objects,
+- fachliche Datenobjekte,
 - fachliche Datenbereiche,
 - Domänenverantwortung,
 - zentrale Oracle-Tabellen je Domäne,
 - zentrale PL/SQL-Packages je Domäne,
 - zentrale fachliche Abhängigkeiten,
 - Abgrenzung zwischen Bestandsdaten und neuen Portaldaten,
-- Auswirkungen auf REST, Migration und Umsetzung.
+- Datenflüsse,
+- Lebenszyklen,
+- Auswirkungen auf REST, Migration, Tests und Umsetzung.
 
 Diese Übersicht umfasst nicht:
 
@@ -100,8 +102,6 @@ Dieser Bestand bleibt führend für die zentralen Bestandsdomänen:
 
 Für diese Domänen wird keine zweite fachliche Datenhaltung aufgebaut.
 
----
-
 ### 4.2 PL/SQL-Bestand bleibt führend
 
 Bestehende PL/SQL-Logik wird nicht durch neue .NET-Logik ersetzt.
@@ -110,13 +110,11 @@ Verbindlich führend sind insbesondere:
 
 | Package / Funktion | Fachliche Verantwortung |
 |---|---|
-| `PA_LHD_SPA` | zentrale bestehende SportFM-Logik, u. a. Buchung, Gebühren, Stornierung und weitere Bestandslogik |
+| `PA_LHD_SPA` | zentrale bestehende SportFM-Logik, u. a. Buchung, Wiederholungen, Gebühren, Stornierung und weitere Bestandslogik |
 | `PA_LHD_SPA_OCC` | Occurrence- und Winner-Logik, performante Termin- und Belegungszugriffe |
 | `PA_LHD_SPA.p_get_charges` | Gebührenberechnung |
 
 Die neue REST- und Serviceschicht kapselt diese Logik, ersetzt sie aber nicht.
-
----
 
 ### 4.3 Fachliches Datenmodell statt technisches Schema
 
@@ -136,13 +134,11 @@ OccurrenceWinner
 
 Das ist keine vollständige physische Oracle-Struktur, sondern eine fachliche Sicht auf den Bestand.
 
----
-
 ### 4.4 Genau eine fachliche Verantwortung
 
-Jedes zentrale Business Object besitzt genau eine fachlich verantwortliche Domäne.
+Jedes zentrale Datenobjekt besitzt genau eine fachlich verantwortliche Domäne.
 
-| Business Object | Verantwortliche Domäne |
+| Datenobjekt | Verantwortliche Domäne |
 |---|---|
 | `Application` | Application |
 | `WorkflowTask` | Workflow |
@@ -157,15 +153,9 @@ Jedes zentrale Business Object besitzt genau eine fachlich verantwortliche Domä
 | `PortalUser` | PortalUser |
 | `Context` | Context |
 
----
-
 ### 4.5 Keine direkte Tabellen-API
 
 REST-Endpunkte bilden keine Oracle-Tabellen direkt ab.
-
-REST arbeitet fachlich über DTOs, Services und domänenbezogene Berechtigungen.
-
-Beispiel:
 
 Nicht gewünscht:
 
@@ -179,13 +169,9 @@ Gewünscht:
 GET /api/v1/bookings/{id}
 ```
 
----
-
 ### 4.6 Keine Doppelmodellierung
 
 Fachliche Daten werden nicht in mehreren Domänen doppelt modelliert.
-
-Verbindliche Abgrenzungen:
 
 | Thema | Verantwortliche Domäne | Nicht verantwortlich |
 |---|---|---|
@@ -223,8 +209,6 @@ Notification / Dashboard / Administration
 
 ### 5.1 Benutzer, Organisation und Kontext
 
-Dieser Bereich bildet Identität, fachliches Profil, Organisationen, Mitgliedschaften und den aktiven fachlichen Arbeitsraum ab.
-
 | Domäne | Fachliche Datenobjekte |
 |---|---|
 | Authentication | technische Identität, Login, Token, Sperrstatus |
@@ -233,8 +217,6 @@ Dieser Bereich bildet Identität, fachliches Profil, Organisationen, Mitgliedsch
 | Context | fachlicher Arbeitskontext, sichtbare Organisation / Abteilung / Rolle |
 
 ### 5.2 Antrag und Bearbeitung
-
-Dieser Bereich bildet neue Portalprozesse für Antragstellung und Bearbeitung ab.
 
 | Domäne | Fachliche Datenobjekte |
 |---|---|
@@ -245,8 +227,6 @@ Dieser Bereich bildet neue Portalprozesse für Antragstellung und Bearbeitung ab
 
 ### 5.3 Sportstätten, Belegung und Buchung
 
-Dieser Bereich bildet den fachlich wichtigsten Bestandskern von SportFM ab.
-
 | Domäne | Fachliche Datenobjekte |
 |---|---|
 | Facility | Sportkomplex, Sportanlage, Teileinheit, FacilityGroup |
@@ -255,8 +235,6 @@ Dieser Bereich bildet den fachlich wichtigsten Bestandskern von SportFM ab.
 
 ### 5.4 Gebühren, Rechnungen und Dokumente
 
-Dieser Bereich bildet Gebühreninformationen, Rechnungen und Dokumente ab.
-
 | Domäne | Fachliche Datenobjekte |
 |---|---|
 | Charge | Charge, ChargeType, ChargeGroup, EventCharge, InvoiceChargeInfo |
@@ -264,8 +242,6 @@ Dieser Bereich bildet Gebühreninformationen, Rechnungen und Dokumente ab.
 | Document | Dokument, Dokumenttyp, Dokumentstatus, Dokumentnummer, PDF-Inhalt, Vorlage, Textbaustein |
 
 ### 5.5 Querschnittsdaten
-
-Dieser Bereich aggregiert oder unterstützt Fachprozesse.
 
 | Domäne | Fachliche Datenobjekte |
 |---|---|
@@ -343,9 +319,9 @@ graph TD
 
 ---
 
-## 7 Domänen → Business Objects
+## 7 Domänen → Datenobjekte
 
-| Domäne | Primäre Business Objects | Charakter |
+| Domäne | Primäre Datenobjekte | Charakter |
 |---|---|---|
 | Authentication | Identity, Login, Token, AccountLock | neue Portaldomäne |
 | PortalUser | PortalUser, Profile, Contact, Preference, Favorite, Consent | neue Portaldomäne |
@@ -390,8 +366,6 @@ Booking beschreibt die Nutzung dieser Sportstätten.
 
 Diese Abgrenzung ist verbindlich, weil `LHD_SPA_EVENTS` die Sportreferenzen `ID_SPORTTYPE`, `ID_SPORTGROUP` und `ID_SPORTSUBGROUP` am Event führt.
 
----
-
 ### 8.2 Charge ↔ Invoice
 
 Charge beschreibt Gebühren und Gebühreninformationen.
@@ -412,8 +386,6 @@ Invoice beschreibt Rechnungen und Zahlstatus.
 
 Die Gebührenberechnung erfolgt über `PA_LHD_SPA.p_get_charges` und wird nicht in Invoice oder Portal neu umgesetzt.
 
----
-
 ### 8.3 Upload ↔ Document
 
 Upload nimmt Dateien entgegen, prüft sie und ordnet sie fachlich zu.
@@ -433,7 +405,7 @@ Document verwaltet Dokumente dauerhaft.
 
 ---
 
-## 9 Ergebnis dieses Übersichtsabschnitts
+## 9 Ergebnis der fachlichen Grundmodellierung
 
 Die fachliche Datenmodellierung ist domänenorientiert aufgebaut.
 
@@ -477,8 +449,6 @@ Sie ist keine vollständige Tabelleninventur. Vollständige Details folgen in `T
 
 ## 11 Domänen → PL/SQL-Packages
 
-Die folgende Matrix beschreibt die zentrale Package-Verantwortung aus fachlicher Sicht.
-
 | Domäne | Package / Funktion | Bedeutung |
 |---|---|---|
 | Booking | `PA_LHD_SPA` | bestehende Buchungs-, Wiederholungs-, Stornierungs- und weitere SportFM-Bestandslogik |
@@ -505,10 +475,6 @@ Die folgende Matrix beschreibt die zentrale Package-Verantwortung aus fachlicher
 
 Die .NET-Schicht ruft Packages über Repository- oder Gateway-Klassen auf.
 
-Die Domänenlogik entscheidet fachlich, **welche** Operation benötigt wird.
-
-Das Repository / Gateway kapselt, **wie** Oracle oder PL/SQL aufgerufen wird.
-
 ```text
 REST Controller
   ↓
@@ -518,6 +484,10 @@ Repository / Oracle Gateway
   ↓
 PL/SQL Package / Oracle Tabelle
 ```
+
+Die Domänenlogik entscheidet fachlich, **welche** Operation benötigt wird.
+
+Das Repository / Gateway kapselt, **wie** Oracle oder PL/SQL aufgerufen wird.
 
 ---
 
@@ -669,23 +639,312 @@ Die Arbeitspakete und die Kalkulation müssen zwischen folgenden Aufwandsarten u
 
 ---
 
-## 16 Ergebnis dieses Bearbeitungsstands
+## 16 Datenflüsse
 
-Mit diesem Abschnitt sind die zentralen Mapping-Sichten ergänzt:
+Die Datenflüsse zeigen, wie neue Portaldaten und bestehende SportFM-Bestandsdaten zusammenwirken.
 
-- Domäne → Oracle-Tabellen,
-- Domäne → PL/SQL-Packages,
-- Domäne → REST-Verantwortung,
-- fachliche Identitäten,
-- Referenzdaten,
-- Auswirkungen auf die Folgedokumente.
+### 16.1 Antrag → Buchung
 
-Die noch zu ergänzenden Abschnitte dieser Datei sind:
+```text
+PortalUser
+  ↓
+Context
+  ↓
+ApplicationDraft
+  ↓
+Application
+  ↓
+WorkflowInstance
+  ↓
+Prüfung / Entscheidung
+  ↓
+BookingEvent
+  ↓
+RecurringPattern
+  ↓
+Occurrence
+  ↓
+OccurrenceWinner
+```
 
-- Datenflüsse,
-- Lebenszyklen,
-- Traceability-Matrix,
-- Risiken,
-- offene Punkte,
-- Änderungsauswirkungen,
-- Abschlussbewertung.
+Wichtig:
+
+- Der Antrag ist ein neues Portalobjekt.
+- Die Buchung bleibt ein SportFM-Bestandsobjekt.
+- Die Überführung vom Antrag zur Buchung erfolgt nicht automatisch durch das Portal, sondern über Workflow, REST-Service und bestehende SportFM-Logik.
+
+### 16.2 Buchung → Gebühren → Rechnung → Dokument
+
+```text
+BookingEvent
+  ↓
+EventCharge
+  ↓
+InvoiceChargeInfo
+  ↓
+Invoice
+  ↓
+Document
+  ↓
+Portal-Download
+```
+
+Die Gebührenberechnung verbleibt in `PA_LHD_SPA.p_get_charges`.
+
+Das Portal zeigt Ergebnisse an, berechnet aber keine Gebühren und erzeugt keine Rechnung eigenständig.
+
+### 16.3 Dateiannahme → Dokument
+
+```text
+Upload
+  ↓
+UploadValidationResult
+  ↓
+UploadAssignment
+  ↓
+Document oder fachliche Zuordnung
+```
+
+Upload ist die technische Annahme und Prüfung.
+
+Document ist die dauerhafte fachliche Dokumentverwaltung.
+
+### 16.4 Dashboard-Aggregation
+
+```text
+Application
+Workflow
+Notification
+Document
+Invoice
+  ↓
+Dashboard
+```
+
+Dashboard besitzt in V1 keine eigene fachliche Persistenz.
+
+---
+
+## 17 Lebenszyklen zentraler Datenobjekte
+
+### 17.1 Application
+
+```text
+Entwurf
+  ↓
+Eingereicht
+  ↓
+In Prüfung
+  ↓
+Rückfrage / Nachforderung
+  ↓
+Genehmigt oder Abgelehnt
+  ↓
+Buchung erzeugt / abgeschlossen
+```
+
+Application ist führend für den Portalvorgang, aber nicht für die spätere Belegung.
+
+### 17.2 BookingEvent
+
+```text
+Angelegt
+  ↓
+Aktiv
+  ↓
+ggf. beendet durch Datum
+  ↓
+ggf. über Stornierungs-Event überlagert
+```
+
+Der aktuelle Statusbestand ist:
+
+| Wert | Bedeutung |
+|---:|---|
+| `1` | aktiv |
+| `-1` | gelöscht |
+
+Buchungen werden fachlich nicht durch komplexe Statusketten historisiert, sondern enden durch Datum oder werden durch Stornierungs-Events abgebildet.
+
+### 17.3 Occurrence und OccurrenceWinner
+
+```text
+Event / Pattern
+  ↓
+Occurrence-Ermittlung
+  ↓
+Winner-Ermittlung
+  ↓
+Kalender / freie Zeiten / Konfliktprüfung
+```
+
+Die Ermittlung erfolgt über `PA_LHD_SPA_OCC`.
+
+Es existiert ein stündlicher Lauf sowie ein Fast Path.
+
+### 17.4 Document
+
+| Wert | Bedeutung |
+|---:|---|
+| `-1` | gelöscht |
+| `1` | aktuell |
+| `2` | bearbeitet |
+| `3` | gedruckt |
+
+Dokumente sind grundsätzlich portalrelevant, sofern die Berechtigung des Portalnutzers zum zugehörigen SportFM-Nutzer gegeben ist.
+
+### 17.5 Invoice
+
+| Wert | Bedeutung |
+|---:|---|
+| `-1` | gelöscht |
+| `1` | aktuell |
+
+Rechnungen werden aus SportFM/SAP-Kontext angezeigt.
+
+Das Portal ist nicht führend für Rechnungserzeugung oder SAP-Buchung.
+
+---
+
+## 18 Datenhoheit und Systemgrenzen
+
+| Datenbereich | Führendes System / führende Schicht | Bemerkung |
+|---|---|---|
+| SportFM-Buchungen | Oracle / PL/SQL / SportFM | keine zweite Buchungsdatenhaltung im Portal |
+| Occurrences / Winner | `PA_LHD_SPA_OCC` / Oracle | zentrale Grundlage für Performance |
+| Gebühren | `PA_LHD_SPA.p_get_charges` / Oracle | keine Gebührenberechnung im Portal |
+| Rechnungen | SportFM / SAP-Integration | Portal zeigt an |
+| Dokumente | SportFM-Dokumentenbestand | Portal lädt berechtigt herunter |
+| Portalidentität | neue Auth-Schicht | getrennt vom fachlichen SportFM-Nutzer |
+| Portalprofil | PortalUser / Organisation / Context | neue Portaldomäne |
+| Antrag | Application / Workflow / Wizard | neue Portaldomäne |
+| Upload | Upload-Domäne | Dateiannahme vor dauerhafter Dokumentpersistenz |
+
+Systemgrenze:
+
+```text
+Portal
+  ↓
+REST-API
+  ↓
+SportFM-Plattform
+  ↓
+Oracle / PL/SQL / SAP
+```
+
+Das Portal darf keine Bestandslogik duplizieren.
+
+---
+
+## 19 Traceability-Matrix
+
+Die folgende Matrix zeigt, wie Datenmodell, REST, Arbeitspakete und Tests später miteinander verbunden werden.
+
+| Datenobjekt | Domäne | REST-Verantwortung | Folgekapitel | Testschwerpunkt |
+|---|---|---|---|---|
+| Application | Application | Antrag erfassen, speichern, einreichen | REST-API, Arbeitspakete | Entwurf, Einreichung, Status |
+| WizardDefinition | Wizard | Wizard laden und ausführen | REST-API, Arbeitspakete | Feldlogik, Pflichtfelder, Versionierung |
+| WorkflowInstance | Workflow | Aufgaben, Entscheidungen, Rückfragen | REST-API, Arbeitspakete | Statusübergänge, Berechtigungen |
+| Upload | Upload | Dateiannahme und Zuordnung | REST-API, Arbeitspakete | Dateityp, Größe, Viren-/Plausibilitätsprüfung |
+| Facility | Facility | Sportstätten lesen | REST-API | Filter, Sichtbarkeit, Performance |
+| BookingEvent | Booking | Buchungen lesen / später erweitern | REST-API, Migration | Bestandstreue, Rechte, Regression |
+| OccurrenceWinner | Availability | Kalender und freie Zeiten | REST-API | Performance, korrekte Belegung |
+| Charge | Charge | Gebühreninformation / Vorschau | REST-API | Gebührenlogik bleibt Bestand |
+| Invoice | Invoice | Rechnungsliste und Details | REST-API | Benutzer sieht nur eigene Rechnungen |
+| Document | Document | Dokumentliste und Download | REST-API | Benutzer sieht nur eigene Dokumente |
+| Notification | Notification | Nachrichten und Versandstatus | REST-API | Zustellung, Lesestatus |
+
+---
+
+## 20 Risiken aus Datenmodellsicht
+
+| Risiko | Bewertung | Gegenmaßnahme |
+|---|---|---|
+| Doppelte Fachlogik im Portal | hoch | REST nur fachlich, keine Berechnung im Portal |
+| direkte Tabellen-API | hoch | DTOs und domänenbezogene Services |
+| Vermischung Upload und Document | mittel | klare Trennung Dateiannahme / dauerhaftes Dokument |
+| Vermischung Charge und Invoice | mittel | Charge berechnet Gebühren, Invoice zeigt Rechnung/Zahlstatus |
+| unklare Zuordnung PortalUser ↔ SportFM-Nutzer | hoch | Context- und Organisationsmodell verbindlich definieren |
+| Performanceprobleme bei Kalender / freie Zeiten | hoch | Nutzung von `LHD_SPA_OCC`, `LHD_SPA_OCC_WINNER`, Fast Path |
+| neue Portalstatus kollidieren mit Bestandsstatus | mittel | Statusmodelle getrennt halten und fachlich mappen |
+| fehlende Revisions- und Downloadprotokollierung | mittel | Audit- und Protokollstrukturen ergänzen |
+
+---
+
+## 21 Offene Klärungspunkte
+
+| Kürzel | Klärungspunkt | Relevanz |
+|---|---|---|
+| KP-DAT-001 | Finale technische Tabellen für Application, Wizard, Workflow, Upload, PortalUser, Organisation und Context festlegen | sehr hoch |
+| KP-DAT-002 | Dokumentenpackages und Nummernkreislogik final identifizieren | hoch |
+| KP-DAT-003 | Rechnungs-/SAP-Packages final identifizieren | hoch |
+| KP-DAT-004 | Portal-Sichtbarkeit von Dokumenten technisch markieren oder rein über Berechtigung ableiten | hoch |
+| KP-DAT-005 | Uploads dauerhaft in `LHD_SPA_DOCUMENTS` übernehmen oder gesondert halten | hoch |
+| KP-DAT-006 | Rollen- und Kontextmodell für Vereine mit mehreren Abteilungen definieren | sehr hoch |
+| KP-DAT-007 | Statusmodell für Antrag und Workflow final festlegen | sehr hoch |
+| KP-DAT-008 | ePayBL-Statusdaten und SAP-Zahlstatus fachlich abgrenzen | mittel |
+| KP-DAT-009 | Notwendige Audit- und Protokolltabellen definieren | mittel |
+
+---
+
+## 22 Änderungsauswirkungen
+
+Änderungen am Datenmodell wirken unterschiedlich stark.
+
+| Änderungsart | Auswirkung | Bewertung |
+|---|---|---|
+| neue Wizard-Felder | Konfiguration / Wizarddaten | gering bis mittel |
+| neuer Antragstyp | Wizard, Application, Workflow | mittel |
+| neuer Workflowstatus | Workflow, Dashboard, Notification | mittel |
+| neue Buchungsart ohne neue Logik | Booking-Referenzdaten | mittel |
+| neue Buchungsart mit neuer Prioritätslogik | Booking, Occurrence, Winner, PL/SQL | hoch |
+| neue Gebührenregel | Charge / PL/SQL | hoch |
+| neue Dokumentvorlage | Document / Template | gering bis mittel |
+| neue Rechnungsschnittstelle | Invoice / Payment / SAP | hoch |
+| neue Portalrolle | Authentication / Organisation / Context | mittel |
+
+Grundsatz:
+
+Änderungen an neuen Portaldomänen sollen möglichst konfigurierbar bleiben.
+
+Änderungen am SportFM-Bestand müssen besonders restriktiv geprüft werden.
+
+---
+
+## 23 Abschlussbewertung
+
+Das Datenmodell bestätigt die strategische Zielarchitektur:
+
+- SportFM besitzt bereits einen tragfähigen fachlichen Daten- und Logikbestand.
+- Oracle und PL/SQL bleiben führend für Buchung, Belegung, Gebühren, Dokumente und Rechnungen.
+- Das Portal ergänzt neue Datenbereiche, ersetzt aber keine Bestandsdomäne.
+- REST wird fachliche Zugriffsschicht, nicht Tabellenfreigabe.
+- Die zentrale Herausforderung liegt in sauberer Abgrenzung zwischen Bestandsdaten, neuen Portaldaten und fachlichen Kontexten.
+
+Die wichtigsten Architekturentscheidungen aus Sicht des Datenmodells sind:
+
+| Nr. | Entscheidung |
+|---:|---|
+| 1 | keine zweite Buchungsdatenhaltung im Portal |
+| 2 | keine Gebührenberechnung im Portal |
+| 3 | keine direkte Tabellen-API |
+| 4 | klare Trennung von PortalUser und SportFM-Nutzer |
+| 5 | Application / Wizard / Workflow als neue Portaldomänen |
+| 6 | Upload und Document getrennt modellieren |
+| 7 | Occurrence und Winner bleiben Grundlage für Kalender und freie Zeiten |
+
+---
+
+## 24 Verweise auf Folgedokumente
+
+Dieses Dokument ist abgeschlossen und bildet die Grundlage für die weiteren Dokumente in Kapitel `05_Datenmodell`.
+
+| Folgedokument | Aufgabe |
+|---|---|
+| `Fachliches_Datenmodell.md` | fachliche Vertiefung der Datenobjekte, Beziehungen und Lebenszyklen |
+| `Oracle_Datenmodell.md` | technische Einordnung des Oracle-Bestands, Tabellenbereiche, technische Strukturen |
+| `Tabellen.md` | strukturierte Tabelleninventur mit Zweck, Schlüsseln, Beziehungen und Relevanz |
+| `Packages.md` | Beschreibung der führenden PL/SQL-Packages und ihrer fachlichen Verantwortung |
+| `Datenmigration.md` | Migrationsstrategie, neue Portaltabellen, Bestandsfreilegung, WPF-Migration |
+
+Nächster Bearbeitungsschritt ist `Fachliches_Datenmodell.md`.
