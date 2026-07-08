@@ -65,7 +65,8 @@ Application ist nicht verantwortlich für:
 - Dokumentengenerierung,
 - technische Dateispeicherung,
 - Benutzerverwaltung,
-- Rollenverwaltung.
+- Rollenverwaltung,
+- Bearbeitung von Vorgängen, die laut Lastenheft nicht über SportFM abgewickelt werden.
 
 Diese Verantwortlichkeiten verbleiben in den jeweils bestehenden oder eigenen Domänen.
 
@@ -133,9 +134,11 @@ Aus den Quellen ergeben sich mindestens folgende Anliegen:
 
 Die finale fachliche Liste der Anliegen ist im Pflichtenheft zu bestätigen.
 
-### 5.3 Antragstypen
+### 5.3 Antragstypen V1
 
-Die Antragstypen orientieren sich an den im Lastenheft und den Anlagen genannten Nutzungsanträgen, insbesondere:
+Die Antragstypen orientieren sich an den im Lastenheft und den Anlagen genannten Nutzungsanträgen, soweit diese über SportFM abgewickelt werden.
+
+Für V1 sind insbesondere relevant:
 
 - Trainingszeiten auf Sportanlagen ohne Schulsportanlagen,
 - Wettkämpfe und Veranstaltungen auf Sportanlagen ohne Schulsportanlagen,
@@ -143,8 +146,17 @@ Die Antragstypen orientieren sich an den im Lastenheft und den Anlagen genannten
 - Wettkämpfe und Veranstaltungen im Eissport- und Ballspielzentrum,
 - Trainingszeiten auf Schulsportanlagen,
 - Wettkämpfe und Veranstaltungen auf Schulsportanlagen,
-- Einzelveranstaltungen auf Sportanlagen einschließlich Schulsportanlagen,
-- Antrag auf Anmietung Dritter.
+- Einzelveranstaltungen auf Sportanlagen einschließlich Schulsportanlagen.
+
+### 5.4 Nicht Bestandteil der Application-Domäne
+
+Der **Antrag auf Anmietung Dritter** wird nicht als Application-V1-Antragstyp geführt.
+
+Begründung:
+
+- Nach unserer fachlichen Korrektur wird dieser Antrag nicht über SportFM bearbeitet.
+- Er darf deshalb nicht als SportFM-Application-Antragstyp kalkuliert oder technisch vorgesehen werden.
+- Falls später eine separate externe Antragsstrecke erforderlich wird, ist diese als eigene Klärung außerhalb der aktuellen SportFM-Application-Domäne zu behandeln.
 
 ---
 
@@ -163,22 +175,7 @@ Application verwaltet den Status der Antragstellung bis zur Übergabe an Workflo
 | `WITHDRAWN` | zurückgezogen | nein |
 | `CLOSED` | abgeschlossen | nein |
 
-### 6.1 Zustandsdiagramm
-
-```mermaid
-stateDiagram-v2
-    [*] --> DRAFT
-    DRAFT --> VALIDATION_FAILED: validieren fehlerhaft
-    VALIDATION_FAILED --> DRAFT: korrigieren
-    DRAFT --> READY_TO_SUBMIT: validieren erfolgreich
-    READY_TO_SUBMIT --> SUBMITTED: einreichen
-    SUBMITTED --> IN_WORKFLOW: Workflow starten
-    IN_WORKFLOW --> QUERY: Rückfrage
-    QUERY --> IN_WORKFLOW: Antwort eingereicht
-    IN_WORKFLOW --> CLOSED: abgeschlossen
-    DRAFT --> WITHDRAWN: zurückziehen
-    QUERY --> WITHDRAWN: zurückziehen, falls zulässig
-```
+Hinweis: Die technische Codierung der Statuswerte ist im Datenmodell final festzulegen. Dieses Kapitel beschreibt die fachliche Bedeutung.
 
 ---
 
@@ -195,65 +192,6 @@ stateDiagram-v2
 | `ApplicationHistory` | Historie | neue Persistenz / Audit |
 | `ApplicationValidationResult` | Validierungsergebnis | transient / optional persistiert |
 
-### 7.1 Klassendiagramm
-
-```mermaid
-classDiagram
-    class Application {
-      +string Id
-      +string ApplicationNumber
-      +string TypeId
-      +string Status
-      +string ContextId
-      +datetime CreatedAt
-      +datetime SubmittedAt
-    }
-
-    class ApplicationType {
-      +string Id
-      +string Code
-      +string Name
-      +string WizardDefinitionId
-      +bool Active
-    }
-
-    class ApplicationPayload {
-      +string ApplicationId
-      +json Data
-      +int Version
-    }
-
-    class ApplicationAttachment {
-      +string Id
-      +string ApplicationId
-      +string UploadId
-      +string DocumentType
-      +bool Required
-    }
-
-    class ApplicationSubmission {
-      +string Id
-      +string ApplicationId
-      +datetime SubmittedAt
-      +string SubmittedBy
-    }
-
-    class ApplicationHistory {
-      +string Id
-      +string ApplicationId
-      +string StatusFrom
-      +string StatusTo
-      +string ChangedBy
-      +datetime ChangedAt
-    }
-
-    Application --> ApplicationType
-    Application --> ApplicationPayload
-    Application --> ApplicationAttachment
-    Application --> ApplicationSubmission
-    Application --> ApplicationHistory
-```
-
 ---
 
 ## 8 Fachliche Regeln
@@ -262,7 +200,7 @@ classDiagram
 |---|---|
 | APP-BR-001 | Ohne aktiven SportFM-Kontext darf kein Antrag angelegt werden. |
 | APP-BR-002 | Ohne Anliegensklärung darf kein Antragstyp ausgewählt werden. |
-| APP-BR-003 | Ein Antrag beginnt immer im Status `DRAFT`. |
+| APP-BR-003 | Ein Antrag beginnt immer als Entwurf. |
 | APP-BR-004 | Entwürfe starten keinen Workflow. |
 | APP-BR-005 | Nur vollständige und gültige Anträge dürfen eingereicht werden. |
 | APP-BR-006 | Nach Einreichung ist eine Bearbeitung durch den Portalnutzer nur noch über definierte Rückfrageprozesse zulässig. |
@@ -270,103 +208,55 @@ classDiagram
 | APP-BR-008 | Application erzeugt keine Buchung. |
 | APP-BR-009 | Application löst beim Einreichen den Workflow aus. |
 | APP-BR-010 | Jede Statusänderung wird historisiert. |
+| APP-BR-011 | Antragstypen, die nicht über SportFM bearbeitet werden, sind nicht Bestandteil der Application-Domäne. |
 
 ---
 
 ## 9 REST-API
 
-### 9.1 Endpunkte
+Die verbindliche REST-Ausarbeitung erfolgt in `04_REST_API/Endpunkte/Application.md` und `04_REST_API/Endpunkte.md`.
 
 | ID | Methode | Pfad | Zweck |
 |---|---|---|---|
-| APP-API-001 | `GET` | `/api/application/types` | verfügbare Antragstypen lesen |
-| APP-API-002 | `POST` | `/api/applications` | Antrag als Entwurf anlegen |
-| APP-API-003 | `GET` | `/api/applications/{id}` | Antrag lesen |
-| APP-API-004 | `GET` | `/api/users/me/applications` | eigene Anträge lesen |
-| APP-API-005 | `PUT` | `/api/applications/{id}` | Entwurf speichern |
-| APP-API-006 | `POST` | `/api/applications/{id}/attachments` | Anlage zuordnen |
-| APP-API-007 | `DELETE` | `/api/applications/{id}/attachments/{attachmentId}` | Anlage aus Entwurf entfernen |
-| APP-API-008 | `POST` | `/api/applications/{id}/validate` | Antrag validieren |
-| APP-API-009 | `POST` | `/api/applications/{id}/submit` | Antrag einreichen |
-| APP-API-010 | `GET` | `/api/applications/{id}/history` | Historie lesen |
-| APP-API-011 | `POST` | `/api/applications/{id}/withdraw` | Antrag zurückziehen, falls zulässig |
+| APP-API-001 | `GET` | `/applications/types` | verfügbare Antragstypen lesen |
+| APP-API-002 | `POST` | `/applications` | Antrag als Entwurf anlegen |
+| APP-API-003 | `GET` | `/applications/{id}` | Antrag lesen |
+| APP-API-004 | `GET` | `/applications` | eigene Anträge lesen |
+| APP-API-005 | `PUT` | `/applications/{id}` | Entwurf speichern |
+| APP-API-006 | `POST` | `/applications/{id}/files` | Anlage zuordnen |
+| APP-API-007 | `POST` | `/applications/{id}/submit` | Antrag einreichen |
+| APP-API-008 | `GET` | `/applications/{id}/history` | Historie lesen |
 
-### 9.2 REST-Prinzipien
-
-- REST-Endpunkte bilden fachliche Aktionen ab.
-- Keine Tabellen-CRUD-API.
-- Keine Geschäftslogik im Portal.
-- REST validiert Berechtigungen und Kontext.
-- REST ruft Application Services auf.
+REST-Endpunkte bilden fachliche Aktionen ab. Es entsteht keine Tabellen-CRUD-API.
 
 ---
 
 ## 10 DTOs
 
-### 10.1 `ApplicationTypeDto`
+Die verbindliche DTO-Grundstruktur wird in `04_REST_API/DTOs.md` beschrieben.
 
-| Feld | Typ | Pflicht | Beschreibung |
-|---|---|:---:|---|
-| `id` | string | ja | technische ID |
-| `code` | string | ja | fachlicher Code |
-| `name` | string | ja | Anzeigename |
-| `description` | string | nein | Beschreibung |
-| `wizardDefinitionId` | string | ja | zugehörige Wizard-Konfiguration |
-| `active` | boolean | ja | aktiv / inaktiv |
+Für Application sind insbesondere relevant:
 
-### 10.2 `ApplicationCreateDto`
+- `AntragTypDto`,
+- `AntragListeDto`,
+- `AntragDetailDto`,
+- `AntragSpeichernAnfrageDto`,
+- `AntragEinreichenErgebnisDto`.
 
-| Feld | Typ | Pflicht |
-|---|---|:---:|
-| `applicationTypeId` | string | ja |
-| `contextId` | string | ja |
-| `concernCode` | string | ja |
-| `initialData` | object | nein |
-
-### 10.3 `ApplicationDto`
-
-| Feld | Typ | Pflicht |
-|---|---|:---:|
-| `id` | string | ja |
-| `applicationNumber` | string | nein |
-| `applicationType` | `ApplicationTypeDto` | ja |
-| `status` | string | ja |
-| `contextId` | string | ja |
-| `payload` | object | ja |
-| `attachments` | array | nein |
-| `createdAt` | datetime | ja |
-| `modifiedAt` | datetime | ja |
-| `submittedAt` | datetime | nein |
-
-### 10.4 `ApplicationSubmitDto`
-
-| Feld | Typ | Pflicht |
-|---|---|:---:|
-| `applicationId` | string | ja |
-| `confirmationAccepted` | boolean | ja |
-| `privacyAccepted` | boolean | ja |
-| `submittedBy` | string | ja |
-
-### 10.5 `ValidationResultDto`
-
-| Feld | Typ | Pflicht |
-|---|---|:---:|
-| `success` | boolean | ja |
-| `errors` | array | ja |
-| `warnings` | array | nein |
+Die DTOs bilden keine Oracle-Tabellen ab, sondern fachliche Sichtweisen.
 
 ---
 
 ## 11 Services
 
-### 11.1 `ApplicationService`
+### 11.1 ApplicationService
 
 Verantwortung:
 
 - Antrag anlegen,
 - Antrag laden,
 - Entwurf speichern,
-- Antrag zurückziehen,
+- Antrag zurückziehen, soweit zulässig,
 - Status prüfen,
 - Historie schreiben.
 
@@ -377,7 +267,7 @@ Nicht verantwortlich für:
 - Buchung,
 - Rechnung.
 
-### 11.2 `ApplicationValidationService`
+### 11.2 ApplicationValidationService
 
 Verantwortung:
 
@@ -387,17 +277,17 @@ Verantwortung:
 - Prüfung Antragstyp,
 - Prüfung Anlagenvollständigkeit.
 
-### 11.3 `ApplicationSubmissionService`
+### 11.3 ApplicationSubmissionService
 
 Verantwortung:
 
 - Gesamtvalidierung,
-- Statuswechsel `READY_TO_SUBMIT` → `SUBMITTED`,
+- Statuswechsel zur Einreichung,
 - Workflowstart,
 - Audit / Historie,
 - Notification auslösen.
 
-### 11.4 `ApplicationAttachmentService`
+### 11.4 ApplicationAttachmentService
 
 Verantwortung:
 
@@ -410,7 +300,7 @@ Verantwortung:
 
 ## 12 Repository
 
-### 12.1 `ApplicationRepository`
+Das ApplicationRepository ist für Persistenzzugriffe zuständig.
 
 Aufgaben:
 
@@ -423,141 +313,58 @@ Aufgaben:
 
 Das Repository enthält keine Geschäftslogik.
 
-### 12.2 Zugriffsmuster
-
-```text
-ApplicationController
-  ↓
-ApplicationService
-  ↓
-ApplicationRepository
-  ↓
-Oracle / PL/SQL
-```
-
 ---
 
 ## 13 Oracle und PL/SQL
 
-### 13.1 Grundsatz
-
 Application erweitert das bestehende SportFM-System, ersetzt aber keine bestehende Buchungs-, Gebühren-, Rechnungs- oder Dokumentenlogik.
-
-### 13.2 Bestehende fachliche Bezugspunkte
 
 Aus den vorhandenen Quellen ergeben sich relevante bestehende Bereiche:
 
 | Bereich | bestehende Quellen / Objekte |
 |---|---|
-| Buchung | `LHD_SPA_BOOKING_NUMBERS`, `LHD_SPA_OCC*` |
+| Buchung | `LHD_SPA_BOOKING_NUMBERS`, `LHD_SPA_OCC*`, `PA_LHD_SPA`, `PA_LHD_SPA_OCC` |
 | Dokumente | `LHD_SPA_DOCUMENTS*`, `LHD_SPA_DOCUMENT_TYPES`, `LHD_SPA_DOCUMENT_TEMPLATES` |
-| Gebühren | `LHD_SPA_CHARGES`, `LHD_SPA_CHARGETYPES`, `LHD_SPA_CHARGEGROUPS` |
+| Gebühren | `LHD_SPA_CHARGES`, `LHD_SPA_CHARGETYPES`, `LHD_SPA_CHARGEGROUPS`, `PA_LHD_SPA.p_get_charges` |
 | Rechnungen | `LHD_SPA_INVOICES*`, `LHD_SPA_INVOICE_CHARGEINFOS*` |
 | Logging | `LHD_SPA_LOGGING` |
 
-### 13.3 Neue / zu prüfende Application-Persistenz
+### 13.1 Neue / zu prüfende Application-Persistenz
 
 Die Quellen belegen kein vorhandenes vollständiges Datenmodell für digitale Antragsentwürfe. Daher sind neue oder erweiterte Persistenzobjekte zu prüfen:
 
 | Objekt | Zweck | Status |
 |---|---|---|
-| `LHD_SPA_APPLICATIONS` | Antragskopf | zu prüfen / voraussichtlich neu |
-| `LHD_SPA_APPLICATION_TYPES` | Antragstypen | zu prüfen / voraussichtlich neu |
-| `LHD_SPA_APPLICATION_PAYLOADS` | strukturierte Antragsdaten | zu prüfen / voraussichtlich neu |
-| `LHD_SPA_APPLICATION_ATTACHMENTS` | Anlagenzuordnung | zu prüfen / voraussichtlich neu |
-| `LHD_SPA_APPLICATION_HISTORY` | Historie | zu prüfen / voraussichtlich neu |
+| `LHD_SPA_PORT_APPLICATION` | Antragskopf | vorgesehen |
+| `LHD_SPA_PORT_APPLICATION_DATA` | strukturierte Antragsdaten | vorgesehen |
+| `LHD_SPA_PORT_APPLICATION_FILE` | Anlagenzuordnung | vorgesehen |
+| `LHD_SPA_PORT_APPLICATION_HISTORY` | Historie | vorgesehen |
 
-### 13.4 Package-Zuordnung
+Die genaue Tabellenstruktur wird in `05_Datenmodell` dokumentiert.
+
+### 13.2 Package-Zuordnung
 
 | Package | Zweck | Status |
 |---|---|---|
-| `PA_LHD_SPA_APPLICATION` | Application-Funktionen | vorgeschlagene Zielstruktur, noch zu bestätigen |
-| `PA_LHD_SPA_WORKFLOW` | Workflowstart / Status | abhängig von Workflow-Domäne |
-| bestehende SportFM-Packages | Buchung, Dokumente, Rechnungen | weiterverwenden |
+| `PA_LHD_SPA_PORT_APPLICATION` | Application-Funktionen | Zielstruktur, zu spezifizieren |
+| `PA_LHD_SPA_PORT_WORKFLOW` | Workflowstart / Status | abhängig von Workflow-Domäne |
+| bestehende SportFM-Packages | Buchung, Dokumente, Rechnungen, Gebühren | weiterverwenden |
 
 ---
 
 ## 14 Blazor-Frontend
 
-### 14.1 Seiten
-
-| ID | Seite | Route | Zweck |
-|---|---|---|---|
-| APP-PAGE-001 | Antragstyp auswählen | `/application/new` | Auswahl Anliegen / Antragstyp |
-| APP-PAGE-002 | Antrag bearbeiten | `/applications/{id}/wizard` | Wizard-geführte Erfassung |
-| APP-PAGE-003 | Eigene Anträge | `/applications` | Liste eigener Anträge |
-| APP-PAGE-004 | Antrag anzeigen | `/applications/{id}` | Detailansicht |
-| APP-PAGE-005 | Antragshistorie | `/applications/{id}/history` | Historie / Protokoll |
-
-### 14.2 Komponenten
-
-| Komponente | Zweck |
-|---|---|
-| `ApplicationTypeCard` | Anzeige eines Antragstyps |
-| `ConcernSelector` | Auswahl der Anliegensklärung |
-| `ApplicationWizardHost` | Einbettung Wizard |
-| `ApplicationStatusBadge` | Statusanzeige |
-| `ApplicationAttachmentList` | Anlagenübersicht |
-| `ApplicationValidationSummary` | Fehleranzeige |
-| `ApplicationHistoryTimeline` | Historie |
-| `SubmitApplicationButton` | Einreichen |
-| `SaveDraftButton` | Entwurf speichern |
+| Seite | Route | Zweck |
+|---|---|---|
+| Antragstyp auswählen | `/application/new` | Auswahl Anliegen / Antragstyp |
+| Antrag bearbeiten | `/applications/{id}/wizard` | Wizard-geführte Erfassung |
+| Eigene Anträge | `/applications` | Liste eigener Anträge |
+| Antrag anzeigen | `/applications/{id}` | Detailansicht |
+| Antragshistorie | `/applications/{id}/history` | Historie / Protokoll |
 
 ---
 
-## 15 Sequenzdiagramme
-
-### 15.1 Antrag anlegen
-
-```mermaid
-sequenceDiagram
-    actor User as Portalnutzer
-    participant UI as Portal / Blazor
-    participant API as ApplicationController
-    participant SVC as ApplicationService
-    participant REPO as ApplicationRepository
-    participant DB as Oracle
-
-    User->>UI: Antragstyp auswählen
-    UI->>API: POST /api/applications
-    API->>SVC: CreateApplication(dto)
-    SVC->>SVC: Kontext und Berechtigung prüfen
-    SVC->>REPO: Save(application)
-    REPO->>DB: speichern
-    DB-->>REPO: applicationId
-    REPO-->>SVC: applicationId
-    SVC-->>API: result
-    API-->>UI: applicationId
-```
-
-### 15.2 Antrag einreichen
-
-```mermaid
-sequenceDiagram
-    actor User as Portalnutzer
-    participant UI as Portal / Blazor
-    participant API as ApplicationController
-    participant SUB as ApplicationSubmissionService
-    participant VAL as ApplicationValidationService
-    participant WF as WorkflowService
-    participant NOT as NotificationService
-    participant REPO as ApplicationRepository
-
-    User->>UI: Antrag einreichen
-    UI->>API: POST /api/applications/{id}/submit
-    API->>SUB: Submit(id)
-    SUB->>VAL: Validate(id)
-    VAL-->>SUB: ValidationResult
-    SUB->>REPO: Status SUBMITTED speichern
-    SUB->>WF: Workflow starten
-    SUB->>NOT: Benachrichtigung vormerken
-    SUB-->>API: Submitted
-    API-->>UI: Erfolg
-```
-
----
-
-## 16 Berechtigungen
+## 15 Berechtigungen
 
 | Berechtigung | Zweck |
 |---|---|
@@ -568,28 +375,28 @@ sequenceDiagram
 | `Application.Submit` | Antrag einreichen |
 | `Application.Withdraw` | Antrag zurückziehen |
 | `Application.History.Read` | Historie lesen |
-| `Application.Workbasket.Read` | Arbeitskorb lesen, intern |
 
 Berechtigungen sind immer kontextbezogen zu prüfen.
 
 ---
 
-## 17 Validierungen
+## 16 Validierungen
 
 | ID | Validierung | Ebene |
 |---|---|---|
 | APP-VAL-001 | aktiver Kontext vorhanden | Application |
 | APP-VAL-002 | Benutzer darf Antrag im Kontext erstellen | Application |
 | APP-VAL-003 | Antragstyp aktiv | Application |
-| APP-VAL-004 | Pflichtfelder vollständig | Wizard / Application |
-| APP-VAL-005 | Pflichtanlagen vorhanden | Application / Upload |
-| APP-VAL-006 | Datenschutz / Zustimmung bestätigt | Application |
-| APP-VAL-007 | Antrag im einreichbaren Status | Application |
-| APP-VAL-008 | Workflowstart möglich | Workflow |
+| APP-VAL-004 | Antragstyp gehört zum SportFM-V1-Umfang | Application |
+| APP-VAL-005 | Pflichtfelder vollständig | Wizard / Application |
+| APP-VAL-006 | Pflichtanlagen vorhanden | Application / Upload |
+| APP-VAL-007 | Datenschutz / Zustimmung bestätigt | Application |
+| APP-VAL-008 | Antrag im einreichbaren Status | Application |
+| APP-VAL-009 | Workflowstart möglich | Workflow |
 
 ---
 
-## 18 Testfälle
+## 17 Testfälle
 
 | Testfall | Beschreibung |
 |---|---|
@@ -603,12 +410,11 @@ Berechtigungen sind immer kontextbezogen zu prüfen.
 | TF-APP-008 | Antrag nach Einreichung nicht mehr als Entwurf änderbar |
 | TF-APP-009 | Zugriff auf fremden Kontext wird verhindert |
 | TF-APP-010 | Historie wird geschrieben |
-| TF-APP-011 | Rückfrage kann beantwortet werden |
-| TF-APP-012 | Antrag kann nur zulässig zurückgezogen werden |
+| TF-APP-011 | Antragstyp außerhalb SportFM-V1 wird nicht angeboten |
 
 ---
 
-## 19 Arbeitspakete
+## 18 Arbeitspakete
 
 | AP | Titel | Inhalt |
 |---|---|---|
@@ -622,30 +428,10 @@ Berechtigungen sind immer kontextbezogen zu prüfen.
 | AP-APP-008 | Workflow-Anbindung | Submit, Workflowstart, Rückfrage |
 | AP-APP-009 | Portal | Seiten, Komponenten, UX |
 | AP-APP-010 | Tests | Unit-, Integrations- und UI-Tests |
-| AP-APP-011 | Dokumentation | API, Domäne, Betriebshinweise |
 
 ---
 
-## 20 Aufwandstreiber
-
-| Treiber | Einfluss |
-|---|---|
-| Anzahl Antragstypen | sehr hoch |
-| Anzahl Wizard-Schritte | sehr hoch |
-| Pflichtanlagen je Antragstyp | hoch |
-| Workflow-Komplexität | sehr hoch |
-| Datenübernahme nach SportFM | hoch |
-| Berechtigungsmodell | hoch |
-| Rückfragen und Nachreichungen | hoch |
-| Historisierung / Audit | hoch |
-| UI-Komplexität | mittel bis hoch |
-| Testaufwand | hoch |
-
-Konkrete Personentage werden erst nach Zuordnung der Antragstypen, Wizard-Schritte, Tabellen und Schnittstellen festgelegt.
-
----
-
-## 21 Risiken
+## 19 Risiken
 
 | Risiko | Bewertung | Maßnahme |
 |---|---|---|
@@ -655,11 +441,11 @@ Konkrete Personentage werden erst nach Zuordnung der Antragstypen, Wizard-Schrit
 | bestehende SportFM-Übergabe unklar | hoch | Integrationsschnittstelle konkretisieren |
 | Portal enthält versehentlich Fachlogik | hoch | REST- und Servicegrenzen strikt einhalten |
 | Oracle-Zuordnung unvollständig | hoch | SQL-Quellen auswerten |
-| Rückfrageprozess unterschätzt | mittel | Testfälle und Workflow-Status ergänzen |
+| nicht zuständige Antragstypen werden versehentlich kalkuliert | hoch | Antragstypenliste gegen Lastenheft und fachliche Korrekturen prüfen |
 
 ---
 
-## 22 Offene Punkte
+## 20 Offene Punkte
 
 | ID | Offener Punkt | Relevanz |
 |---|---|---|
@@ -674,19 +460,20 @@ Konkrete Personentage werden erst nach Zuordnung der Antragstypen, Wizard-Schrit
 
 ---
 
-## 23 Traceability-Matrix
+## 21 Traceability-Matrix
 
 | Quelle | Funktion | REST | Service | UI | Test | AP |
 |---|---|---|---|---|---|---|
-| Lastenheft Onlineantrag | Antrag anlegen | APP-API-002 | ApplicationService | APP-PAGE-002 | TF-APP-002 | AP-APP-003/004 |
-| Lastenheft Upload | Anlage hochladen | APP-API-006 | AttachmentService | AttachmentList | TF-APP-005 | AP-APP-007 |
-| Snapshot REST-Grundsätze | Einreichen | APP-API-009 | SubmissionService | SubmitButton | TF-APP-006/007 | AP-APP-008 |
+| Lastenheft Onlineantrag | Antrag anlegen | APP-API-002 | ApplicationService | Antrag bearbeiten | TF-APP-002 | AP-APP-003/004 |
+| Lastenheft Upload | Anlage hochladen | APP-API-006 | AttachmentService | Anlagenübersicht | TF-APP-005 | AP-APP-007 |
+| Snapshot REST-Grundsätze | Einreichen | APP-API-007 | SubmissionService | Einreichen | TF-APP-006/007 | AP-APP-008 |
 | Lastenheft Arbeitskorb | Übergabe Workflow/SportFM | intern | SubmissionService | Statusanzeige | TF-APP-007 | AP-APP-008 |
 | Sicherheitsanforderungen | Kontextprüfung | alle | ApplicationService | alle Seiten | TF-APP-009 | AP-APP-004/010 |
+| fachliche Korrektur | nicht über SportFM bearbeitete Anträge ausschließen | Antragstypenfilter | ApplicationValidationService | Antragstypauswahl | TF-APP-011 | AP-APP-001/003/010 |
 
 ---
 
-## 24 Änderungsauswirkungen
+## 22 Änderungsauswirkungen
 
 Änderungen an `Application.md` wirken sich aus auf:
 
@@ -705,9 +492,11 @@ Konkrete Personentage werden erst nach Zuordnung der Antragstypen, Wizard-Schrit
 
 ---
 
-## 25 Ergebnis
+## 23 Ergebnis
 
-Die Domäne Application ist damit als neue Plattformdomäne fachlich und technisch spezifiziert.
+Die Domäne Application ist als neue Plattformdomäne fachlich spezifiziert.
+
+Die Korrektur ist berücksichtigt: Der **Antrag auf Anmietung Dritter** ist kein SportFM-Application-V1-Antragstyp.
 
 Die konkrete Kalkulation bleibt abhängig von:
 
