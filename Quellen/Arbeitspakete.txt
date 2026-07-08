@@ -1,0 +1,1653 @@
+# 11 Arbeitspakete – Grobstruktur
+
+## 11.1 Ziel
+
+Die Arbeitspakete bilden die Grundlage für:
+
+- Aufwandsschätzung
+- Kostenaufstellung
+- Projektplan
+- Controlling
+- Abrechnung einzelner Leistungen
+
+Jedes Arbeitspaket erhält später:
+
+```text
+ID
+Titel
+Beschreibung
+Typ
+Priorität
+Aufwand Entwicklung
+Aufwand Test
+Aufwand Dokumentation
+Risiko
+Abhängigkeiten
+```
+
+---
+
+# 11.2 Arbeitspaket-Typen
+
+| Kürzel | Bedeutung |
+|---|---|
+| N | Neuentwicklung |
+| E | Erweiterung |
+| M | Migration |
+| I | Integration |
+| K | Konfiguration |
+| D | Dokumentation |
+| T | Test |
+
+---
+
+# 11.3 Hauptarbeitspakete
+
+## AP-001 Projektgrundlagen
+
+- Analyse
+- Pflichtenheft
+- Zielarchitektur
+- Datenmodell
+- Projektplanung
+- Aufwandsschätzung
+
+---
+
+## AP-002 Plattformbasis
+
+- .NET 10 Solution
+- Projektstruktur
+- Konfiguration
+- Dependency Injection
+- Fehlerbehandlung
+- Logging-Grundlage
+- Swagger/OpenAPI
+
+---
+
+## AP-003 REST-API Grundsystem
+
+- API-Versionierung
+- DTO-Struktur
+- Response-Modelle
+- Fehler-DTO
+- Korrelation-ID
+- zentrale Middleware
+
+---
+
+## AP-004 Authentication
+
+- Registrierung
+- Login
+- Passwort vergessen
+- Passwort ändern
+- JWT
+- Refresh Token
+- 2FA
+- OAuth-Vorbereitung
+- BundID-Vorbereitung
+
+---
+
+## AP-005 Authorization / Context
+
+- aktiver Kontext
+- Kontextwechsel
+- Rollenprüfung
+- Berechtigungsprüfung
+- Kontextbasierter Zugriff
+
+---
+
+## AP-006 Organisation
+
+- OE-Verwaltung
+- Abteilungen
+- Ansprechpartner
+- eigene Kontaktdaten je Abteilung
+- optionaler SportFM-Kontext
+- Benutzerzuordnung
+
+---
+
+## AP-007 Application
+
+- Antrag anlegen
+- Entwurf speichern
+- Antrag einreichen
+- Uploads
+- Status
+- Antragshistorie
+
+---
+
+## AP-008 Wizard
+
+- Antragstyp-Konfiguration
+- Schritte
+- Felder
+- Pflichtfelder
+- einfache Sichtbarkeiten
+- REST-Übergabe
+
+**Abgrenzung:** kein Low-Code-System.
+
+---
+
+## AP-009 Workflow
+
+- Statusmodell
+- Statuswechsel
+- Rückfragen
+- Historie
+- Bearbeiter
+- Aufgaben
+
+---
+
+## AP-010 Booking REST
+
+- bestehende Buchungen lesen
+- Buchungsdetails
+- Dokumente zur Buchung
+- Gebühren zur Buchung
+- keine neue Buchungslogik
+
+---
+
+## AP-011 Availability
+
+- freie Zeiten suchen
+- Filter
+- Nutzung `PA_LHD_SPA_OCC`
+- Portal-Integration
+
+---
+
+## AP-012 Calendar
+
+- Tagesansicht
+- Wochenansicht
+- Monatsansicht
+- Listenansicht
+- Kontextfilter
+
+---
+
+## AP-013 Document
+
+- Dokumentliste
+- Dokumentdetails
+- PDF-Download
+- Upload-Zuordnung
+- Audit Download
+
+---
+
+## AP-014 Invoice
+
+- Rechnungsliste
+- Rechnungsdetails
+- PDF
+- Zahlstatus vorbereitet
+
+---
+
+## AP-015 Notification / Mail
+
+- Portalnachrichten
+- Mail-Queue
+- Mailversand
+- Vorlagen
+- Versandprotokoll
+
+---
+
+## AP-016 Portal UI
+
+- Dashboard
+- Navigation
+- Kontextauswahl
+- Anträge
+- freie Zeiten
+- Kalender
+- Dokumente
+- Rechnungen
+- Organisation
+- Profil
+
+---
+
+## AP-017 Administration
+
+- Benutzerfreigabe
+- OE-Prüfung
+- Abteilungen
+- Rollen
+- Antragstypen
+- Mailvorlagen
+
+---
+
+## AP-018 Audit / Logging
+
+- technische Logs
+- fachliches Audit
+- Korrelation-ID
+- Suchbarkeit
+
+---
+
+## AP-019 WPF-Migration
+
+- REST-Client
+- schrittweise Ablösung direkter DB-Zugriffe
+- Start mit lesenden Funktionen
+
+---
+
+## AP-020 Tests
+
+- Unit Tests
+- Integrationstests
+- REST-Tests
+- Portaltests
+- Berechtigungstests
+- Lasttests
+
+---
+
+## AP-021 Betrieb
+
+- Deployment
+- Konfiguration
+- Monitoring
+- Health Checks
+- Versionierung
+- Betriebshandbuch
+
+---
+
+# 11.4 Nächster Schritt
+
+Als nächstes wird aus dieser Grobstruktur eine detaillierte AP-Liste erstellt.
+
+Start mit:
+
+```text
+AP-002 Plattformbasis
+AP-003 REST-API Grundsystem
+AP-004 Authentication
+AP-005 Authorization / Context
+```
+user
+mach bitte weiter
+ChatGPT
+Perfekt. Jetzt beginnen wir mit dem Teil, der später den größten Nutzen für dich haben wird.
+
+Nicht mehr "AP-002 Plattformbasis = 120 h"
+
+Sondern die eigentliche Zerlegung.
+
+Das ist später die Grundlage für
+
+- Projektplan
+- Gantt
+- Controlling
+- Abrechnung
+- Aufwandsschätzung
+
+Ich werde die Arbeitspakete so fein schneiden, dass sie später maximal etwa **8–24 Stunden** umfassen. Das halte ich für eine gute Größe.
+
+---
+
+# 11.5 AP-002 Plattformbasis
+
+## Ziel
+
+Bereitstellung der technischen Infrastruktur der Plattform.
+
+---
+
+| AP | Arbeitspaket | Typ |
+|------|-----------------------------|:--:|
+| AP-002.001 | Solutionstruktur erstellen | N |
+| AP-002.002 | Projektstruktur REST | N |
+| AP-002.003 | Gemeinsame Klassenbibliotheken | N |
+| AP-002.004 | Konfigurationsverwaltung | N |
+| AP-002.005 | Dependency Injection | N |
+| AP-002.006 | Logging-Infrastruktur | N |
+| AP-002.007 | Fehlerbehandlung | N |
+| AP-002.008 | Swagger/OpenAPI | N |
+| AP-002.009 | Health-Endpoint | N |
+| AP-002.010 | Versionierungsinformationen | N |
+
+---
+
+# 11.6 AP-003 REST-Grundsystem
+
+| AP | Arbeitspaket | Typ |
+|------|-------------------------------|:--:|
+| AP-003.001 | REST-Projekt erstellen | N |
+| AP-003.002 | API-Versionierung | N |
+| AP-003.003 | DTO-Basis | N |
+| AP-003.004 | Response-Modell | N |
+| AP-003.005 | Fehler-DTO | N |
+| AP-003.006 | Middleware | N |
+| AP-003.007 | Korrelation-ID | N |
+| AP-003.008 | Request Logging | N |
+| AP-003.009 | Response Logging | N |
+| AP-003.010 | Exception Handling | N |
+
+---
+
+# 11.7 AP-004 Authentication
+
+| AP | Arbeitspaket | Typ |
+|------|-------------------------------|:--:|
+| AP-004.001 | Benutzerregistrierung | N |
+| AP-004.002 | Mailbestätigung | N |
+| AP-004.003 | Anmeldung | N |
+| AP-004.004 | Passwort vergessen | N |
+| AP-004.005 | Passwort ändern | N |
+| AP-004.006 | JWT | N |
+| AP-004.007 | Refresh Token | N |
+| AP-004.008 | 2FA | N |
+| AP-004.009 | OAuth vorbereiten | N |
+| AP-004.010 | BundID vorbereiten | N |
+
+---
+
+# 11.8 AP-005 Authorization / Context
+
+Hier beginnt bereits deine eigentliche Plattform.
+
+| AP | Arbeitspaket | Typ |
+|------|-------------------------------|:--:|
+| AP-005.001 | Rollenmodell | N |
+| AP-005.002 | Berechtigungsmodell | N |
+| AP-005.003 | Kontextmodell | N |
+| AP-005.004 | Kontextwechsel | N |
+| AP-005.005 | Kontextprüfung | N |
+| AP-005.006 | Rollenprüfung | N |
+| AP-005.007 | Berechtigungsattribute | N |
+| AP-005.008 | REST-Integration | I |
+| AP-005.009 | Audit | I |
+| AP-005.010 | Tests | T |
+
+---
+
+# 11.9 AP-006 Organisation
+
+Hier sehe ich bereits deutlich mehr Aufwand.
+
+| AP | Arbeitspaket | Typ |
+|------|-------------------------------|:--:|
+| AP-006.001 | OE-Verwaltung | N |
+| AP-006.002 | Abteilungsverwaltung | N |
+| AP-006.003 | Ansprechpartner | N |
+| AP-006.004 | Anschriften | N |
+| AP-006.005 | Kommunikationsdaten | N |
+| AP-006.006 | Benutzerzuordnung | N |
+| AP-006.007 | Rollenzuordnung | N |
+| AP-006.008 | OE-Administration | N |
+| AP-006.009 | Abteilungsadministration | N |
+| AP-006.010 | REST | I |
+
+---
+
+# Das fällt mir jetzt auf
+
+Ich glaube, wir sollten die Arbeitspakete **nicht nur nummerieren**, sondern zusätzlich klassifizieren.
+
+Beispielsweise:
+
+| Kategorie | Beschreibung |
+|------------|--------------|
+| Architektur | Infrastruktur |
+| Backend | REST / Services |
+| Datenbank | Oracle |
+| Portal | Blazor |
+| Integration | SAP / Mail |
+| Migration | WPF |
+| Test | QS |
+| Dokumentation | Projektdokumentation |
+
+Warum?
+
+Nehmen wir beispielsweise:
+
+**AP-006.002 Abteilungsverwaltung**
+
+Das besteht eigentlich aus:
+
+- Oracle
+- REST
+- Blazor
+- Test
+
+Wenn wir das nicht trennen, lässt sich später der Aufwand nur schwer kontrollieren.
+
+---
+
+## Deshalb würde ich eine zweite Ebene einführen.
+
+Beispiel:
+
+```text
+AP-006.002
+
+↓
+
+DB
+↓
+
+REST
+↓
+
+Portal
+↓
+
+Test
+```
+
+Also beispielsweise:
+
+| AP | Ebene |
+|------|---------|
+| AP-006.002.01 | Oracle |
+| AP-006.002.02 | REST |
+| AP-006.002.03 | Portal |
+| AP-006.002.04 | Test |
+
+---
+
+# Ich glaube, das wird später einer der größten Vorteile unseres Projekthandbuches
+
+Denn daraus entstehen automatisch:
+
+- Aufwand je Datenbank
+- Aufwand REST
+- Aufwand Blazor
+- Aufwand Tests
+- Aufwand Dokumentation
+
+**ohne dass wir später alles erneut zerlegen müssen.**
+
+## Ich würde deshalb die Arbeitspakete konsequent **dreistufig** aufbauen:
+
+- **AP-006** → Fachpaket (z. B. Organisation)
+- **AP-006.002** → Funktion (z. B. Abteilungsverwaltung)
+- **AP-006.002.01** → Technische Umsetzung (DB, REST, Portal, Test)
+
+Das halte ich insbesondere für dein Projekt für ideal, weil du als einzelner Entwickler bzw. kleines Team sehr genau nachvollziehen kannst, **wo** der Aufwand tatsächlich entsteht. Gleichzeitig erhält dein Auftraggeber auf Wunsch nur die obere Ebene (Fachpakete), während du intern bis auf die technische Umsetzungsebene herunterplanen kannst. Ich glaube, genau diese Struktur wird später die belastbarste Grundlage für Planung, Controlling und Nachkalkulation sein.
+user
+ja, so machen wir das. fahre bitte fort.
+ChatGPT
+Perfekt. Genau so hätte ich es auch aufgebaut.
+
+Ich würde sogar noch einen Schritt weiter gehen.
+
+Wir trennen künftig konsequent zwischen **fachlichen Arbeitspaketen** und **technischen Umsetzungspaketen**.
+
+Dadurch können wir später den Projektplan nahezu automatisch erzeugen.
+
+---
+
+# 11.10 Arbeitspaket AP-006 Organisation
+
+## Ziel
+
+Bereitstellung der Organisationsverwaltung für das SportPortal.
+
+---
+
+## AP-006.001 Organisationseinheiten
+
+### Beschreibung
+
+Verwaltung der Organisationseinheiten.
+
+Beispiele
+
+- Verein
+- Schule
+- Kita
+- Firma
+
+---
+
+### Technische Arbeitspakete
+
+| AP | Beschreibung | Ebene |
+|------|-----------------------------|-----------|
+| AP-006.001.01 | Oracle-Tabellen | Datenbank |
+| AP-006.001.02 | PL/SQL Package | Datenbank |
+| AP-006.001.03 | REST-Service | Backend |
+| AP-006.001.04 | DTOs | Backend |
+| AP-006.001.05 | Blazor-Seiten | Portal |
+| AP-006.001.06 | Berechtigungen | Backend |
+| AP-006.001.07 | Audit | Backend |
+| AP-006.001.08 | Tests | QS |
+
+---
+
+# AP-006.002 Abteilungen
+
+Beschreibung
+
+Verwaltung der Abteilungen.
+
+---
+
+### Technische Arbeitspakete
+
+| AP | Beschreibung | Ebene |
+|------|------------------------------|-----------|
+| AP-006.002.01 | Oracle-Tabellen | Datenbank |
+| AP-006.002.02 | PL/SQL Package | Datenbank |
+| AP-006.002.03 | REST-Service | Backend |
+| AP-006.002.04 | DTOs | Backend |
+| AP-006.002.05 | Blazor-Seiten | Portal |
+| AP-006.002.06 | Berechtigungen | Backend |
+| AP-006.002.07 | Audit | Backend |
+| AP-006.002.08 | Tests | QS |
+
+---
+
+# AP-006.003 Ansprechpartner
+
+| AP | Beschreibung |
+|------|---------------------------|
+| AP-006.003.01 | Oracle |
+| AP-006.003.02 | PL/SQL |
+| AP-006.003.03 | REST |
+| AP-006.003.04 | DTO |
+| AP-006.003.05 | Portal |
+| AP-006.003.06 | Test |
+
+---
+
+# AP-006.004 Portalnutzer
+
+| AP | Beschreibung |
+|------|---------------------------|
+| AP-006.004.01 | Oracle |
+| AP-006.004.02 | PL/SQL |
+| AP-006.004.03 | REST |
+| AP-006.004.04 | DTO |
+| AP-006.004.05 | Portal |
+| AP-006.004.06 | Test |
+
+---
+
+# AP-006.005 Rollen
+
+| AP | Beschreibung |
+|------|---------------------------|
+| AP-006.005.01 | Oracle |
+| AP-006.005.02 | PL/SQL |
+| AP-006.005.03 | REST |
+| AP-006.005.04 | Portal |
+| AP-006.005.05 | Test |
+
+---
+
+# AP-006.006 SportFM-Kontext
+
+Das wird später eines der wichtigsten Arbeitspakete.
+
+---
+
+### Inhalt
+
+- Zuordnung OE → SportFM-Kontext
+- Zuordnung Abteilung → SportFM-Kontext
+- Kontextwechsel
+- Kontextprüfung
+- Kontextberechtigungen
+
+---
+
+### Technische Arbeitspakete
+
+| AP | Beschreibung |
+|------|---------------------------|
+| AP-006.006.01 | Oracle |
+| AP-006.006.02 | PL/SQL |
+| AP-006.006.03 | REST |
+| AP-006.006.04 | DTO |
+| AP-006.006.05 | Portal |
+| AP-006.006.06 | Test |
+
+---
+
+# Neue Regel
+
+Ich glaube, wir sollten für **jedes technische Arbeitspaket** dieselben Attribute verwenden.
+
+| Feld | Bedeutung |
+|------|-----------|
+| AP-ID | eindeutige Nummer |
+| Ebene | Datenbank / Backend / Portal / Test |
+| Beschreibung | kurze Aufgabenbeschreibung |
+| Voraussetzungen | benötigte Vorarbeiten |
+| Ergebnis | erwartetes Lieferobjekt |
+| Aufwand | Stunden |
+| Risiko | niedrig / mittel / hoch |
+| Verantwortlich | Entwickler |
+| Status | Offen / In Arbeit / Erledigt |
+
+---
+
+# Beispiel
+
+## AP-006.002.03
+
+### REST-Service Abteilungen
+
+**Ebene**
+
+Backend
+
+---
+
+**Beschreibung**
+
+Implementierung des REST-Services zur Verwaltung von Abteilungen.
+
+---
+
+**Voraussetzungen**
+
+- Oracle-Tabellen vorhanden
+- PL/SQL Package vorhanden
+
+---
+
+**Ergebnis**
+
+REST-Endpunkte
+
+- Lesen
+- Anlegen
+- Ändern
+- Deaktivieren
+
+---
+
+**Aufwand**
+
+wird später geschätzt
+
+---
+
+**Status**
+
+Offen
+
+---
+
+# Das ist der entscheidende Vorteil
+
+Ab jetzt können wir **jedes einzelne Arbeitspaket** kalkulieren.
+
+Nicht mehr
+
+```text
+Organisation
+
+180 Stunden
+```
+
+sondern beispielsweise
+
+```text
+Oracle                 18 h
+
+PL/SQL                 22 h
+
+REST                   20 h
+
+DTO                     6 h
+
+Portal                 28 h
+
+Tests                  12 h
+
+Dokumentation           6 h
+
+----------------------------
+
+Gesamt                112 h
+```
+
+Und genau **diese Ebene** halte ich für den größten Mehrwert des gesamten Projekthandbuchs.
+
+Denn später kannst du deinem Auftraggeber nachvollziehbar erklären:
+
+> *"Die Organisationsverwaltung kostet nicht 112 Stunden, weil wir 'ein Formular bauen', sondern weil sie aus Datenbank, PL/SQL, REST, Portal, Berechtigungen, Tests und Dokumentation besteht."*
+
+Das ist aus meiner Sicht die belastbarste Grundlage für die spätere Kalkulation und für eventuelle Nachträge oder Erweiterungen. Genau auf dieser Ebene werden wir anschließend die komplette Aufwandsschätzung für alle rund **20 Hauptarbeitspakete** aufbauen.
+user
+sehr gut. bitte weiter machen.
+ChatGPT
+Perfekt. Jetzt beginnt aus meiner Sicht der wertvollste Teil der gesamten Dokumentation.
+
+Wir zerlegen die Arbeitspakete so, dass daraus **1:1 eine Kalkulation** entstehen kann.
+
+Ich werde dabei immer nach demselben Muster arbeiten.
+
+---
+
+# 11.11 AP-007 Application
+
+## Ziel
+
+Bereitstellung der Antragsverwaltung.
+
+**Nicht** der Buchungslogik.
+
+---
+
+# AP-007.001 Antrag anlegen
+
+| AP | Beschreibung | Ebene |
+|------|-------------------------------|------------|
+| AP-007.001.01 | Oracle Tabellen | Datenbank |
+| AP-007.001.02 | PL/SQL Package | Datenbank |
+| AP-007.001.03 | REST-Service | Backend |
+| AP-007.001.04 | DTOs | Backend |
+| AP-007.001.05 | Portal | Blazor |
+| AP-007.001.06 | Audit | Backend |
+| AP-007.001.07 | Test | QS |
+
+---
+
+# AP-007.002 Antrag bearbeiten
+
+| AP | Beschreibung |
+|------|--------------------------|
+| AP-007.002.01 | Oracle |
+| AP-007.002.02 | PL/SQL |
+| AP-007.002.03 | REST |
+| AP-007.002.04 | DTO |
+| AP-007.002.05 | Portal |
+| AP-007.002.06 | Test |
+
+---
+
+# AP-007.003 Entwurf speichern
+
+| AP | Beschreibung |
+|------|--------------------------|
+| AP-007.003.01 | Oracle |
+| AP-007.003.02 | PL/SQL |
+| AP-007.003.03 | REST |
+| AP-007.003.04 | Portal |
+| AP-007.003.05 | Test |
+
+---
+
+# AP-007.004 Antrag einreichen
+
+| AP | Beschreibung |
+|------|---------------------------|
+| AP-007.004.01 | Validierung |
+| AP-007.004.02 | Workflow starten |
+| AP-007.004.03 | Notification |
+| AP-007.004.04 | Audit |
+| AP-007.004.05 | REST |
+| AP-007.004.06 | Test |
+
+---
+
+# AP-007.005 Upload
+
+| AP | Beschreibung |
+|------|--------------------------|
+| AP-007.005.01 | Oracle |
+| AP-007.005.02 | REST |
+| AP-007.005.03 | Dateiverwaltung |
+| AP-007.005.04 | Portal |
+| AP-007.005.05 | Test |
+
+---
+
+# AP-007.006 Antragsliste
+
+| AP | Beschreibung |
+|------|---------------------------|
+| AP-007.006.01 | REST |
+| AP-007.006.02 | DTO |
+| AP-007.006.03 | Portal |
+| AP-007.006.04 | Filter |
+| AP-007.006.05 | Paging |
+| AP-007.006.06 | Test |
+
+---
+
+# AP-007.007 Detailansicht
+
+| AP | Beschreibung |
+|------|---------------------------|
+| AP-007.007.01 | REST |
+| AP-007.007.02 | DTO |
+| AP-007.007.03 | Portal |
+| AP-007.007.04 | Historie |
+| AP-007.007.05 | Test |
+
+---
+
+# 11.12 AP-008 Wizard
+
+Ich würde den Wizard jetzt bewusst klein halten.
+
+---
+
+# AP-008.001 Antragstypen
+
+- Oracle
+- REST
+- Portal
+- Test
+
+---
+
+# AP-008.002 Schritte
+
+- Oracle
+- REST
+- Portal
+- Test
+
+---
+
+# AP-008.003 Felder
+
+- Oracle
+- REST
+- Portal
+- Test
+
+---
+
+# AP-008.004 Pflichtfelder
+
+- Validierung
+- REST
+- Portal
+- Test
+
+---
+
+# AP-008.005 Sichtbarkeit
+
+- einfache Bedingungen
+- REST
+- Portal
+- Test
+
+---
+
+# AP-008.006 Uploadintegration
+
+- Uploadservice
+- Portal
+- REST
+- Test
+
+---
+
+# AP-008.007 PDF-Übergabe
+
+- REST
+- Workflow
+- Dokumentengenerierung
+
+---
+
+# Wichtig
+
+Hier würde ich **bewusst stoppen**.
+
+Ich möchte den Wizard **nicht** weiter zerlegen.
+
+Sonst entwickeln wir wieder ein eigenes Framework.
+
+Das entspricht nicht deiner Zielsetzung.
+
+---
+
+# 11.13 AP-009 Workflow
+
+Jetzt kommen wir zum eigentlichen Bearbeitungsprozess.
+
+---
+
+# AP-009.001 Workflow starten
+
+- Oracle
+- PL/SQL
+- REST
+- Test
+
+---
+
+# AP-009.002 Statuswechsel
+
+- Oracle
+- REST
+- Audit
+- Test
+
+---
+
+# AP-009.003 Rückfrage
+
+- Oracle
+- REST
+- Portal
+- Notification
+
+---
+
+# AP-009.004 Historie
+
+- Oracle
+- REST
+- Portal
+
+---
+
+# AP-009.005 Aufgaben
+
+- REST
+- Dashboard
+- Portal
+
+---
+
+# AP-009.006 Bearbeiter
+
+- Rollen
+- Kontext
+- REST
+
+---
+
+# AP-009.007 Abschluss
+
+- Workflow
+- Booking
+- Notification
+
+---
+
+## Hier ist mir etwas Wichtiges aufgefallen
+
+Ich möchte eine Regel für die Aufwandsschätzung einführen, die uns später enorm helfen wird.
+
+Bisher zerlegen wir Arbeitspakete technisch.
+
+Ich würde zusätzlich **Wiederverwendung** kennzeichnen.
+
+Beispiel:
+
+| AP | Wiederverwendung |
+|------|-----------------|
+| Upload | 100 % |
+| Audit | 100 % |
+| Logging | 100 % |
+| DTO | teilweise |
+| Notification | 100 % |
+
+Dadurch können wir bei späteren Erweiterungen sofort erkennen:
+
+> **Dieses Arbeitspaket existiert bereits.**
+
+Beispielsweise wird ein neuer Antragstyp künftig **keinen neuen Upload**, **kein neues Audit**, **kein neues Logging** und **keine neue Benachrichtigungslogik** benötigen.
+
+Er verwendet lediglich die bestehenden Plattformdienste.
+
+Das halte ich für einen sehr wichtigen Punkt – nicht nur für die Kalkulation gegenüber dem Auftraggeber, sondern auch für deine interne Planung der nächsten Jahre. Es macht den Nutzen der Plattformarchitektur unmittelbar messbar und hilft, Folgeprojekte wesentlich realistischer zu bewerten.
+user
+ok. bitte weitermachen.
+ChatGPT
+# 11.14 AP-010 Booking REST
+
+## Ziel
+
+Bestehende Buchungslogik lesend und kontrolliert über REST bereitstellen.
+
+Keine Neuentwicklung der Buchungslogik.
+
+---
+
+## AP-010.001 Buchungsliste
+
+| AP | Beschreibung | Ebene |
+|---|---|---|
+| AP-010.001.01 | PL/SQL Zugriff | Datenbank |
+| AP-010.001.02 | REST-Service | Backend |
+| AP-010.001.03 | DTO | Backend |
+| AP-010.001.04 | Kontextprüfung | Backend |
+| AP-010.001.05 | Test | QS |
+
+---
+
+## AP-010.002 Buchungsdetails
+
+| AP | Beschreibung |
+|---|---|
+| AP-010.002.01 | PL/SQL Zugriff |
+| AP-010.002.02 | REST |
+| AP-010.002.03 | DTO |
+| AP-010.002.04 | Berechtigung |
+| AP-010.002.05 | Test |
+
+---
+
+## AP-010.003 Buchungsdokumente
+
+| AP | Beschreibung |
+|---|---|
+| AP-010.003.01 | Document-Service anbinden |
+| AP-010.003.02 | REST |
+| AP-010.003.03 | DTO |
+| AP-010.003.04 | Audit |
+| AP-010.003.05 | Test |
+
+---
+
+## AP-010.004 Gebühren zur Buchung
+
+| AP | Beschreibung |
+|---|---|
+| AP-010.004.01 | Charge-Service anbinden |
+| AP-010.004.02 | REST |
+| AP-010.004.03 | DTO |
+| AP-010.004.04 | Test |
+
+---
+
+# 11.15 AP-011 Availability
+
+## Ziel
+
+Suche freier Zeiten im Portal.
+
+Nutzung der vorhandenen Occurrence-/Winner-Logik.
+
+---
+
+## AP-011.001 Suchmaske
+
+| AP | Beschreibung |
+|---|---|
+| AP-011.001.01 | Filterdefinition |
+| AP-011.001.02 | Portal UI |
+| AP-011.001.03 | Validierung |
+| AP-011.001.04 | Test |
+
+---
+
+## AP-011.002 REST-Suche
+
+| AP | Beschreibung |
+|---|---|
+| AP-011.002.01 | Search-DTO |
+| AP-011.002.02 | REST-Service |
+| AP-011.002.03 | Kontextprüfung |
+| AP-011.002.04 | Test |
+
+---
+
+## AP-011.003 PL/SQL-Anbindung
+
+| AP | Beschreibung |
+|---|---|
+| AP-011.003.01 | Package-Aufruf |
+| AP-011.003.02 | Ergebnis-Mapping |
+| AP-011.003.03 | Performance-Test |
+
+---
+
+## AP-011.004 Ergebnisliste
+
+| AP | Beschreibung |
+|---|---|
+| AP-011.004.01 | Ergebnis-DTO |
+| AP-011.004.02 | Portal UI |
+| AP-011.004.03 | Absprung Antrag |
+| AP-011.004.04 | Test |
+
+---
+
+# 11.16 AP-012 Calendar
+
+## Ziel
+
+Kalenderdaten kontextbezogen im Portal anzeigen.
+
+---
+
+## AP-012.001 Kalender-REST
+
+| AP | Beschreibung |
+|---|---|
+| AP-012.001.01 | Tagesansicht |
+| AP-012.001.02 | Wochenansicht |
+| AP-012.001.03 | Monatsansicht |
+| AP-012.001.04 | Listenansicht |
+| AP-012.001.05 | Test |
+
+---
+
+## AP-012.002 Kalender-UI
+
+| AP | Beschreibung |
+|---|---|
+| AP-012.002.01 | Telerik Kalender |
+| AP-012.002.02 | Filter |
+| AP-012.002.03 | Detail-Popup |
+| AP-012.002.04 | Test |
+
+---
+
+# 11.17 AP-013 Document
+
+## AP-013.001 Dokumentliste
+
+| AP | Beschreibung |
+|---|---|
+| AP-013.001.01 | PL/SQL Zugriff |
+| AP-013.001.02 | REST |
+| AP-013.001.03 | DTO |
+| AP-013.001.04 | Portal UI |
+| AP-013.001.05 | Test |
+
+---
+
+## AP-013.002 Dokumentdownload
+
+| AP | Beschreibung |
+|---|---|
+| AP-013.002.01 | REST Download |
+| AP-013.002.02 | Berechtigung |
+| AP-013.002.03 | Audit |
+| AP-013.002.04 | Test |
+
+---
+
+## AP-013.003 Dokumentupload
+
+| AP | Beschreibung |
+|---|---|
+| AP-013.003.01 | Upload-Service |
+| AP-013.003.02 | Zuordnung Fachobjekt |
+| AP-013.003.03 | Portal UI |
+| AP-013.003.04 | Test |
+
+---
+
+# 11.18 AP-014 Invoice
+
+## AP-014.001 Rechnungsliste
+
+| AP | Beschreibung |
+|---|---|
+| AP-014.001.01 | PL/SQL Zugriff |
+| AP-014.001.02 | REST |
+| AP-014.001.03 | DTO |
+| AP-014.001.04 | Portal UI |
+| AP-014.001.05 | Test |
+
+---
+
+## AP-014.002 Rechnungsdetails
+
+| AP | Beschreibung |
+|---|---|
+| AP-014.002.01 | PL/SQL Zugriff |
+| AP-014.002.02 | REST |
+| AP-014.002.03 | DTO |
+| AP-014.002.04 | Portal UI |
+| AP-014.002.05 | Test |
+
+---
+
+## AP-014.003 Zahlstatus
+
+| AP | Beschreibung |
+|---|---|
+| AP-014.003.01 | Statusmodell |
+| AP-014.003.02 | REST |
+| AP-014.003.03 | Portal UI |
+| AP-014.003.04 | Test |
+
+---
+
+# 11.19 AP-015 Notification / Mail
+
+## AP-015.001 Portalnachrichten
+
+| AP | Beschreibung |
+|---|---|
+| AP-015.001.01 | Oracle |
+| AP-015.001.02 | REST |
+| AP-015.001.03 | Portal UI |
+| AP-015.001.04 | Test |
+
+---
+
+## AP-015.002 Mail-Queue
+
+| AP | Beschreibung |
+|---|---|
+| AP-015.002.01 | Oracle |
+| AP-015.002.02 | Versandjob |
+| AP-015.002.03 | Fehlerbehandlung |
+| AP-015.002.04 | Test |
+
+---
+
+## AP-015.003 Mailvorlagen
+
+| AP | Beschreibung |
+|---|---|
+| AP-015.003.01 | Datenmodell |
+| AP-015.003.02 | Platzhalter |
+| AP-015.003.03 | Administration |
+| AP-015.003.04 | Test |
+user
+bitte fort fahren
+ChatGPT
+Perfekt. Jetzt kommen wir in die Arbeitspakete, bei denen später ein großer Teil der Blazor-Entwicklung liegen wird.
+
+Ich würde dabei konsequent dieselbe Struktur beibehalten.
+
+---
+
+# 11.20 AP-016 SportPortal
+
+## Ziel
+
+Entwicklung der Benutzeroberfläche des SportPortals.
+
+Die Fachlogik verbleibt vollständig in den Plattformservices.
+
+---
+
+# AP-016.001 Portalgrundgerüst
+
+| AP | Beschreibung | Ebene |
+|---|---|---|
+| AP-016.001.01 | Blazor Web App Grundprojekt | Portal |
+| AP-016.001.02 | Telerik Integration | Portal |
+| AP-016.001.03 | Layout | Portal |
+| AP-016.001.04 | Navigation | Portal |
+| AP-016.001.05 | Authentifizierung | Portal |
+| AP-016.001.06 | Test | QS |
+
+---
+
+# AP-016.002 Dashboard
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.002.01 | Dashboard-Layout |
+| AP-016.002.02 | Dashboard-Service |
+| AP-016.002.03 | Aufgaben |
+| AP-016.002.04 | Dokumente |
+| AP-016.002.05 | Rechnungen |
+| AP-016.002.06 | Benachrichtigungen |
+| AP-016.002.07 | Test |
+
+---
+
+# AP-016.003 Kontextauswahl
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.003.01 | Kontextumschaltung |
+| AP-016.003.02 | REST-Anbindung |
+| AP-016.003.03 | Benutzeroberfläche |
+| AP-016.003.04 | Test |
+
+---
+
+# AP-016.004 Organisation
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.004.01 | OE-Verwaltung |
+| AP-016.004.02 | Abteilungen |
+| AP-016.004.03 | Ansprechpartner |
+| AP-016.004.04 | Benutzer |
+| AP-016.004.05 | Rollen |
+| AP-016.004.06 | Test |
+
+---
+
+# AP-016.005 Anträge
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.005.01 | Antragsübersicht |
+| AP-016.005.02 | Detailansicht |
+| AP-016.005.03 | Wizard |
+| AP-016.005.04 | Upload |
+| AP-016.005.05 | Historie |
+| AP-016.005.06 | Test |
+
+---
+
+# AP-016.006 Freie Zeiten
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.006.01 | Suchmaske |
+| AP-016.006.02 | Ergebnisliste |
+| AP-016.006.03 | Kalenderdarstellung |
+| AP-016.006.04 | Antrag starten |
+| AP-016.006.05 | Test |
+
+---
+
+# AP-016.007 Kalender
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.007.01 | Kalenderansichten |
+| AP-016.007.02 | Detaildialog |
+| AP-016.007.03 | Filter |
+| AP-016.007.04 | Test |
+
+---
+
+# AP-016.008 Dokumente
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.008.01 | Dokumentliste |
+| AP-016.008.02 | Filter |
+| AP-016.008.03 | PDF-Anzeige |
+| AP-016.008.04 | Download |
+| AP-016.008.05 | Test |
+
+---
+
+# AP-016.009 Rechnungen
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.009.01 | Rechnungsliste |
+| AP-016.009.02 | Detailansicht |
+| AP-016.009.03 | PDF |
+| AP-016.009.04 | Test |
+
+---
+
+# AP-016.010 Profil
+
+| AP | Beschreibung |
+|---|---|
+| AP-016.010.01 | Persönliche Daten |
+| AP-016.010.02 | Passwort |
+| AP-016.010.03 | 2FA |
+| AP-016.010.04 | Einstellungen |
+| AP-016.010.05 | Test |
+
+---
+
+# 11.21 AP-017 Administration
+
+## Ziel
+
+Bereitstellung der Administrationsoberfläche.
+
+---
+
+# AP-017.001 Benutzerfreigaben
+
+| AP | Beschreibung |
+|---|---|
+| AP-017.001.01 | Benutzerliste |
+| AP-017.001.02 | Freigeben |
+| AP-017.001.03 | Sperren |
+| AP-017.001.04 | Test |
+
+---
+
+# AP-017.002 Organisationen
+
+| AP | Beschreibung |
+|---|---|
+| AP-017.002.01 | Übersicht |
+| AP-017.002.02 | Detail |
+| AP-017.002.03 | Bearbeitung |
+| AP-017.002.04 | Test |
+
+---
+
+# AP-017.003 Rollen
+
+| AP | Beschreibung |
+|---|---|
+| AP-017.003.01 | Rollenverwaltung |
+| AP-017.003.02 | Rechte |
+| AP-017.003.03 | Test |
+
+---
+
+# AP-017.004 Antragstypen
+
+| AP | Beschreibung |
+|---|---|
+| AP-017.004.01 | Übersicht |
+| AP-017.004.02 | Aktivieren |
+| AP-017.004.03 | Deaktivieren |
+| AP-017.004.04 | Test |
+
+---
+
+# AP-017.005 Mailvorlagen
+
+| AP | Beschreibung |
+|---|---|
+| AP-017.005.01 | Vorlagen |
+| AP-017.005.02 | Platzhalter |
+| AP-017.005.03 | Vorschau |
+| AP-017.005.04 | Test |
+
+---
+
+# 11.22 AP-018 Audit / Logging
+
+## AP-018.001 Audit
+
+| AP | Beschreibung |
+|---|---|
+| AP-018.001.01 | Datenmodell |
+| AP-018.001.02 | REST |
+| AP-018.001.03 | Speicherung |
+| AP-018.001.04 | Suche |
+| AP-018.001.05 | Test |
+
+---
+
+## AP-018.002 Logging
+
+| AP | Beschreibung |
+|---|---|
+| AP-018.002.01 | Middleware |
+| AP-018.002.02 | Fehler |
+| AP-018.002.03 | Performance |
+| AP-018.002.04 | Korrelation-ID |
+| AP-018.002.05 | Test |
+
+---
+
+# 11.23 AP-019 WPF-Migration
+
+Hier möchte ich bewusst eine andere Struktur wählen.
+
+Die Migration erfolgt **nicht modulweise**, sondern **Service für Service**.
+
+Das passt wesentlich besser zu deiner Strategie.
+
+## Migrationsreihenfolge
+
+| AP | Beschreibung |
+|---|---|
+| AP-019.001 | Authentication |
+| AP-019.002 | Stammdaten |
+| AP-019.003 | Referenzdaten |
+| AP-019.004 | Dokumente |
+| AP-019.005 | Rechnungen |
+| AP-019.006 | Kalender |
+| AP-019.007 | Freie Zeiten |
+| AP-019.008 | Buchungen |
+| AP-019.009 | Gebühren |
+| AP-019.010 | Administration |
+
+---
+
+## Warum diese Reihenfolge?
+
+Sie minimiert das Projektrisiko:
+
+1. **Zuerst lesende Funktionen** (geringes Risiko).
+2. **Danach komplexere Fachfunktionen**.
+3. **Schreibende Funktionen** erst nach erfolgreicher Stabilisierung der REST-API.
+
+Ich halte diese Reihenfolge für deutlich sinnvoller als eine Migration nach WPF-Modulen, weil sie exakt deiner Zielarchitektur entspricht und jederzeit einen stabilen Zwischenstand ermöglicht. Das wird später auch den Rollout beim Eigenbetrieb erheblich vereinfachen und Risiken im Produktivbetrieb reduzieren.
+user
+sehr gut. bitte weiter machen.
+ChatGPT
+# 11.24 AP-020 Tests
+
+## Ziel
+
+Sicherstellung der fachlichen und technischen Qualität.
+
+---
+
+## AP-020.001 Unit Tests
+
+| AP | Beschreibung |
+|---|---|
+| AP-020.001.01 | Service-Tests |
+| AP-020.001.02 | Validierungstests |
+| AP-020.001.03 | Berechtigungstests |
+| AP-020.001.04 | Mapping-Tests |
+
+---
+
+## AP-020.002 Integrationstests
+
+| AP | Beschreibung |
+|---|---|
+| AP-020.002.01 | REST ↔ Oracle |
+| AP-020.002.02 | REST ↔ PL/SQL |
+| AP-020.002.03 | Portal ↔ REST |
+| AP-020.002.04 | Mailversand |
+| AP-020.002.05 | Dokumentdownload |
+
+---
+
+## AP-020.003 Fachtests
+
+| AP | Beschreibung |
+|---|---|
+| AP-020.003.01 | Antrag einreichen |
+| AP-020.003.02 | Rückfrage beantworten |
+| AP-020.003.03 | Dokument anzeigen |
+| AP-020.003.04 | Rechnung anzeigen |
+| AP-020.003.05 | Freie Zeiten suchen |
+| AP-020.003.06 | Kontext wechseln |
+
+---
+
+## AP-020.004 Sicherheitstests
+
+| AP | Beschreibung |
+|---|---|
+| AP-020.004.01 | Zugriff fremder Kontext |
+| AP-020.004.02 | Dokument fremder Nutzer |
+| AP-020.004.03 | Rechnung fremder Nutzer |
+| AP-020.004.04 | Rollenprüfung |
+| AP-020.004.05 | Token-Ablauf |
+
+---
+
+## AP-020.005 Last- und Performance-Tests
+
+| AP | Beschreibung |
+|---|---|
+| AP-020.005.01 | Login |
+| AP-020.005.02 | Dashboard |
+| AP-020.005.03 | Dokumentliste |
+| AP-020.005.04 | Kalender |
+| AP-020.005.05 | Suche freie Zeiten |
+
+---
+
+# 11.25 AP-021 Betrieb
+
+## Ziel
+
+Bereitstellung, Betrieb und Überwachung der Lösung.
+
+---
+
+## AP-021.001 Deployment
+
+| AP | Beschreibung |
+|---|---|
+| AP-021.001.01 | Testumgebung |
+| AP-021.001.02 | Produktivumgebung |
+| AP-021.001.03 | Konfiguration |
+| AP-021.001.04 | Releaseprozess |
+
+---
+
+## AP-021.002 Monitoring
+
+| AP | Beschreibung |
+|---|---|
+| AP-021.002.01 | Health Checks |
+| AP-021.002.02 | Fehlerüberwachung |
+| AP-021.002.03 | Performance |
+| AP-021.002.04 | Mail-Queue |
+| AP-021.002.05 | Hintergrundjobs |
+
+---
+
+## AP-021.003 Dokumentation
+
+| AP | Beschreibung |
+|---|---|
+| AP-021.003.01 | Betriebshandbuch |
+| AP-021.003.02 | Installationsdokumentation |
+| AP-021.003.03 | Administrationsdokumentation |
+| AP-021.003.04 | Schnittstellendokumentation |
+
+---
+
+# 11.26 AP-022 Projektdokumentation
+
+| AP | Beschreibung |
+|---|---|
+| AP-022.001 | Projekthandbuch |
+| AP-022.002 | Pflichtenheft |
+| AP-022.003 | REST-API-Spezifikation |
+| AP-022.004 | Datenmodell |
+| AP-022.005 | Arbeitspakete |
+| AP-022.006 | Aufwandsschätzung |
+| AP-022.007 | Projektplan |
+| AP-022.008 | Testkonzept |
+| AP-022.009 | Controllingvorlagen |
